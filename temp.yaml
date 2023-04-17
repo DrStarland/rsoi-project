@@ -1,0 +1,10 @@
+
+# helm install postgres ./postgres-chart
+# ./scripts/fill-db.sh postgres-7b4b78b57-5vqfk
+# helm uninstall postgres
+
+# helm install services ./services-chart
+# helm install services --debug --dry-run ./services-chart
+# helm uninstall services
+# kubectl apply -f load-balancer.yaml
+# kubectl get services
