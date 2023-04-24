@@ -1,8 +1,8 @@
-FROM golang:1.19
+FROM golang:1.20
 WORKDIR /pain/
 COPY . .
-RUN go mod tidy
-RUN CGO_ENABLED=0 go build -a -installsuffix cgo -o app ./cmd/tickets
+RUN go mod tidy && go mod vendor
+RUN CGO_ENABLED=0 go build -a -installsuffix cgo -o app ./cmd/notes
 
 FROM alpine:latest  
 RUN apk --no-cache add ca-certificates
