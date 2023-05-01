@@ -16,6 +16,17 @@ import (
 	"go.uber.org/zap"
 )
 
+type App struct {
+	Router        *httprouter.Router
+	DB            *dbx.DB
+	Logger        *zap.SugaredLogger
+	ServerAddress string
+}
+
+func NewApp(logger *zap.SugaredLogger) App {
+	return App{Logger: logger}.initDB().initRouter().initAddress()
+}
+
 func GetServerAddress() string {
 	ServerAddress := os.Getenv("PORT")
 	if ServerAddress == "" || ServerAddress == ":80" {
@@ -34,17 +45,6 @@ func (app App) initAddress() App {
 
 func HealthOK(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	w.WriteHeader(http.StatusOK)
-}
-
-type App struct {
-	Router        *httprouter.Router
-	DB            *dbx.DB
-	Logger        *zap.SugaredLogger
-	ServerAddress string
-}
-
-func NewApp(logger *zap.SugaredLogger) App {
-	return App{Logger: logger}.initDB().initRouter().initAddress()
 }
 
 func (app App) initDB() App {
@@ -70,8 +70,9 @@ func (app App) initRouter() App {
 	repoNotes := note.NewRepository(tak, app.Logger)
 
 	noteHandler := &handlers.NoteMainHandler{
-		Logger: app.Logger,
-		Repo:   repoNotes,
+		Logger:  app.Logger,
+		Repo:    repoNotes,
+		Service: handlers.NewNoteService(repoNotes, *app.Logger),
 	}
 
 	// ticketHandler := &handlers.TicketsHandler{
@@ -88,6 +89,8 @@ func (app App) initRouter() App {
 	}
 
 	router.GET("/api/v1/notes", mid.AccessLog(noteHandler.List, app.Logger))
+	router.GET("/api/v1/notes/:id", mid.AccessLog(noteHandler.Show, app.Logger))
+
 	router.GET("/api/v1/tickets/:username", mid.AccessLog(HealthOK, app.Logger))
 	router.DELETE("/api/v1/tickets/:ticketUID", mid.AccessLog(HealthOK, app.Logger))
 
@@ -96,4 +99,8 @@ func (app App) initRouter() App {
 	app.Router = router
 
 	return app
+}
+
+func (app App) Stop() {
+	app.DB.Close()
 }

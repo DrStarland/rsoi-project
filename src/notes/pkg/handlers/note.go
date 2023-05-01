@@ -1,15 +1,16 @@
 package handlers
 
 import (
-	// "io/ioutil"
-
+	"io"
 	"net/http"
 	"notes/pkg/models/note"
-	"notes/pkg/models/ticket"
 	"notes/pkg/myjson"
+	"strconv"
 
 	"github.com/julienschmidt/httprouter"
 	"go.uber.org/zap"
+
+	"github.com/pkg/errors"
 )
 
 type NotesHandler interface {
@@ -21,13 +22,29 @@ type NotesHandler interface {
 }
 
 type NoteMainHandler struct {
-	Logger *zap.SugaredLogger
-	Repo   note.SqlRepository
+	Logger  *zap.SugaredLogger
+	Repo    note.Repository
+	Service NoteService
 }
 
-func (h *NoteMainHandler) List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// func (h NoteMainHandler) query(c *routing.Context) error {
+// 	ctx := c.Request.Context()
+// 	count, err := h.Repo.Count(ctx)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	pages := pagination.NewFromRequest(c.Request, count)
+// 	albums, err := h.Service.Query(ctx, pages.Offset(), pages.Limit())
+// 	if err != nil {
+// 		return err
+// 	}
+// 	pages.Items = albums
+// 	return c.Write(pages)
+// }
+
+func (h NoteMainHandler) List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// lol := ps.ByName("id")
-	elems, err := h.Repo.Query(r.Context(), 0, 64)
+	elems, err := h.Service.Query(r.Context(), 0, 64)
 	if err != nil {
 		myjson.JSONError(w, http.StatusInternalServerError, "DB error: "+err.Error())
 		return
@@ -35,10 +52,119 @@ func (h *NoteMainHandler) List(w http.ResponseWriter, r *http.Request, ps httpro
 	myjson.JSONResponce(w, http.StatusOK, elems)
 }
 
-type TicketsHandler struct {
-	Logger      *zap.SugaredLogger
-	TicketsRepo ticket.Repository
+func (h NoteMainHandler) Show(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id, err := strconv.Atoi(ps.ByName("id"))
+	if err != nil {
+		myjson.JSONResponce(w, http.StatusBadRequest, errors.Wrap(err, "bad ID in URL"))
+	}
+
+	note, err := h.Service.Get(r.Context(), id)
+	if err != nil {
+		myjson.JSONResponce(w, http.StatusInternalServerError, errors.Wrap(err, ""))
+	}
+
+	myjson.JSONResponce(w, http.StatusOK, note)
 }
+
+func (h *NoteMainHandler) Add(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	note := &note.Note{}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		myjson.JSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	r.Body.Close()
+
+	if err = myjson.From(body, note); err != nil {
+		myjson.JSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if _, err = h.Service.Create(r.Context(), note); err != nil {
+		myjson.JSONError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	myjson.JSONResponce(w, http.StatusCreated, note)
+}
+
+// func (h NoteMainHandler) Create(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+// 	var input CreateAlbumRequest
+// 	if err := c.Read(&input); err != nil {
+// 		r.logger.With(c.Request.Context()).Info(err)
+// 		return errors.BadRequest("")
+// 	}
+// 	album, err := r.service.Create(c.Request.Context(), input)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	myjson.JSONResponce(note, http.StatusCreated)
+// 	return c.WriteWithStatus(album, http.StatusCreated)
+// }
+
+// func (r resource) update(c *routing.Context) error {
+// 	var input UpdateAlbumRequest
+// 	if err := c.Read(&input); err != nil {
+// 		r.logger.With(c.Request.Context()).Info(err)
+// 		return errors.BadRequest("")
+// 	}
+
+// 	album, err := r.service.Update(c.Request.Context(), c.Param("id"), input)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return c.Write(album)
+// }
+
+// func (r resource) delete(c *routing.Context) error {
+// 	album, err := r.service.Delete(c.Request.Context(), c.Param("id"))
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return c.Write(album)
+// }
+
+// func (h NoteMainHandler) create(c *routing.Context) error {
+// 	var input CreateAlbumRequest
+// 	if err := c.Read(&input); err != nil {
+// 		r.logger.With(c.Request.Context()).Info(err)
+// 		return errors.BadRequest("")
+// 	}
+// 	album, err := h.Repo.Create(c.Request.Context(), input)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return c.WriteWithStatus(album, http.StatusCreated)
+// }
+
+// func (h NoteMainHandler) update(c *routing.Context) error {
+// 	var input UpdateAlbumRequest
+// 	if err := c.Read(&input); err != nil {
+// 		r.logger.With(c.Request.Context()).Info(err)
+// 		return errors.BadRequest("")
+// 	}
+
+// 	album, err := h.Repo.Update(c.Request.Context(), c.Param("id"), input)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return c.Write(album)
+// }
+
+// func (h NoteMainHandler) delete(c *routing.Context) error {
+// 	album, err := h.Repo.Delete(c.Request.Context(), c.Param("id"))
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return c.Write(album)
+// }
 
 // type PostsHandler struct {
 // 	PostsRepo   posts.PostsRepo
@@ -172,47 +298,6 @@ type TicketsHandler struct {
 // 	}
 
 // 	myjson.JSONResponce(w, http.StatusOK, elems)
-// }
-
-// func (h *PostsHandler) Add(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-// 	if r.Header.Get("Content-Type") != Applijson {
-// 		myjson.JSONError(w, http.StatusBadRequest, "unknown payload")
-// 		return
-// 	}
-
-// 	body, err := ioutil.ReadAll(r.Body)
-// 	if err != nil {
-// 		log.Println(err.Error())
-// 	}
-// 	r.Body.Close()
-
-// 	currentSess, ok := r.Context().Value(session.SessionKey).(*session.Session)
-// 	if !ok {
-// 		myjson.JSONError(w, http.StatusInternalServerError, "broken context in post add")
-// 	}
-
-// 	psto := &posts.Post{}
-// 	err = myjson.From(body, psto)
-
-// 	if err != nil {
-// 		myjson.JSONError(w, http.StatusBadRequest, "cant unpack payload")
-// 		return
-// 	}
-
-// 	psto.Created = mytime.Time()
-// 	psto.Comments = make([]comments.Comment, 0)
-// 	psto.Votes = []posts.Vote{{UserID: currentSess.User.ID, Vote: 1}}
-// 	psto.Score = 1
-// 	psto.Author = currentSess.User
-// 	psto.UpvotePercentage = 100
-
-// 	_, err = h.PostsRepo.Add(psto)
-// 	if err != nil {
-// 		log.Println()
-// 		myjson.JSONError(w, http.StatusInternalServerError, err.Error())
-// 	}
-
-// 	myjson.JSONResponce(w, http.StatusCreated, psto)
 // }
 
 // func (h *PostsHandler) AddComment(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

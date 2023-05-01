@@ -14,7 +14,7 @@ func From(source []byte, dest any) error {
 	return json.Unmarshal(source, dest)
 }
 
-func JsonError(w http.ResponseWriter, status int, msg string) {
+func JSONError(w http.ResponseWriter, status int, msg string) {
 	resp, err := To(map[string]interface{}{
 		"status":  status,
 		"message": msg,
@@ -29,8 +29,7 @@ func JsonError(w http.ResponseWriter, status int, msg string) {
 	}
 }
 
-func JsonResponce(w http.ResponseWriter, status int, msg any) {
-	w.Header().Add("Content-Type", "application/json")
+func JSONResponce(w http.ResponseWriter, status int, msg any) {
 	respJSON, err := To(msg)
 	if err != nil {
 		log.Println(err.Error())
