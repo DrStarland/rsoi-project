@@ -14,9 +14,7 @@ func main() {
 	logger := zapLogger.Sugar()
 
 	noteApp := initialization.NewApp(logger)
-	defer func() {
-		noteApp.Stop()
-	}()
+	defer noteApp.Stop()
 
 	logger.Infow("starting server",
 		"type", "START",
