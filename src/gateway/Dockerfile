@@ -49,10 +49,9 @@ COPY ./go.mod .
 COPY ./vendor .
 RUN go mod tidy
 COPY . .
-
 RUN CGO_ENABLED=0 go build -a -installsuffix cgo -o app ./cmd/gateway
 # --no-cache 
-FROM alpine:latest  
+FROM alpine:3.18.0 
 RUN apk add --no-cache ca-certificates
 WORKDIR /root/
 COPY --from=0 /pain/app ./

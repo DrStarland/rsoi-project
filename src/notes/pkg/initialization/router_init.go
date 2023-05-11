@@ -119,7 +119,7 @@ func (app App) initRouter() App {
 
 	api := swag.New(
 		option.Title("Note Service API Doc"),
-		option.Security("Sophisticated_Service_auth", "read:pets"),
+		option.Security("Sophisticated_Service_auth", "user", "admin"),
 		option.SecurityScheme("Sophisticated_Service_auth",
 			// option.OAuth2Security("accessCode", "http://example.com/oauth/authorize", "http://example.com/oauth/token"),
 			option.APIKeySecurity("Authorization", "header"),
@@ -177,7 +177,7 @@ func (app App) initRouter() App {
 			endpoint.Handler(
 				mid.AccessLog(mid.Auth(noteHandler.Add, app.Logger), app.Logger),
 			),
-			endpoint.Summary("Авторизация пользователя"),
+			endpoint.Summary("Создание новой заметки"),
 			endpoint.Body(note.Note{}, "Структура запроса на создание заметки", true),
 			endpoint.Response(http.StatusOK, "was successful"),
 			endpoint.Tags("Notes"),

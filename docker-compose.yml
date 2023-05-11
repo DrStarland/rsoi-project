@@ -27,7 +27,7 @@ services:
     build:
       context: src/users
       dockerfile: Dockerfile
-    image: drstarland/testus-users:1.0
+    image: namus-testus-users:1.0
     container_name: testus-users
     environment:
       PORT: "8040"
@@ -38,7 +38,7 @@ services:
     build:
       context: src/notes
       dockerfile: Dockerfile
-    image: drstarland/testus-notes:1.0
+    image: namus-testus-notes:1.0
     container_name: testus-notes
     environment:
       PORT: "8050"
@@ -51,7 +51,7 @@ services:
     build:
       context: src/gateway
       dockerfile: Dockerfile
-    image: drstarland/testus-gateway:1.0
+    image: namus-testus-gateway:1.0
     container_name: testus-gateway
     environment:
       PORT: "8080"
@@ -93,7 +93,7 @@ services:
   #   build:
   #     context: src/notes
   #     dockerfile: Dockerfile
-  #   image: drstarland/testus-notes:1.0
+  #   image: namus-testus-notes:1.0
   #   container_name: testus-notes
   #   environment:
   #     PORT: "8070"
@@ -106,7 +106,7 @@ services:
   #   build:
   #     context: src/flights
   #     dockerfile: Dockerfile
-  #   image: drstarland/testus-flights:1.0
+  #   image: namus-testus-flights:1.0
   #   container_name: testus-flights
   #   environment:
   #     PORT: "8060"
@@ -119,7 +119,7 @@ services:
   #   build:
   #     context: src/bonus
   #     dockerfile: Dockerfile
-  #   image: drstarland/testus-bonus:1.0
+  #   image: namus-testus-bonus:1.0
   #   container_name: testus-bonus
   #   environment:
   #     PORT: "8050"
@@ -130,7 +130,7 @@ services:
   #   build:
   #     context: src/gateway
   #     dockerfile: Dockerfile
-  #   image: drstarland/testus-gateway:1.0
+  #   image: namus-testus-gateway:1.0
   #   container_name: testus-gateway
   #   environment:
   #     PORT: "8080"
