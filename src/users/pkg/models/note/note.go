@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"users/pkg/models/scope"
-	"users/pkg/models/tag"
 	"users/pkg/models/timestamp"
 	"users/pkg/models/user"
 
@@ -17,7 +16,7 @@ type Note struct {
 	ID              int       `json:"id"`
 	Author          user.User `json:"author"` // author
 	VisibilityScope scope.Scope
-	Tags            []tag.Tag
+	Tags            []string            // []tag.Tag
 	CreatedAt       timestamp.Timestamp // return time.Now().Format("2006-01-02T15:04:05.000")
 	UpdatedAt       timestamp.Timestamp
 	Title           string
