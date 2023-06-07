@@ -46,8 +46,9 @@
 FROM golang:1.20
 WORKDIR /pain/
 COPY ./go.mod .
-COPY ./vendor .
-RUN go mod tidy
+COPY ./go.sum .
+COPY ./vendor* .
+RUN go mod tidy && go mod vendor
 COPY . .
 RUN CGO_ENABLED=0 go build -a -installsuffix cgo -o app ./cmd/gateway
 # --no-cache 

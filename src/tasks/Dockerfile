@@ -1,8 +1,10 @@
 FROM golang:1.20
 WORKDIR /pain/
 COPY ./go.mod .
-COPY ./vendor .
-RUN go mod tidy && go mod vendor
+# COPY ./go.sum .
+RUN ls
+COPY ./vendor* .
+RUN go mod tidy -e && go mod vendor
 COPY . .
 RUN CGO_ENABLED=0 go build -a -installsuffix cgo -o app ./cmd/tasks
 
