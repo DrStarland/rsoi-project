@@ -1,8 +1,31 @@
-CREATE DATABASE tickets;
-GRANT ALL PRIVILEGES ON DATABASE tickets TO program;
+CREATE DATABASE notes;
+GRANT ALL PRIVILEGES ON DATABASE notes TO program;
 
-CREATE DATABASE flights;
-GRANT ALL PRIVILEGES ON DATABASE flights TO program;
+CREATE TABLE scope (
+    ID SERIAL PRIMARY KEY,
+    scope_type INT NOT NULL
+        CHECK (scope_type = 1 or scope_type = 2) default 1,
+    owner_id INT NOT NULL
+);
 
-CREATE DATABASE privileges;
-GRANT ALL PRIVILEGES ON DATABASE privileges TO program;
+CREATE TABLE tag (
+    ID SERIAL PRIMARY KEY,
+    Name VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE note (
+    ID           SERIAL PRIMARY KEY,
+    scope_id    int REFERENCES scope(ID),
+    -- связь с тегами через доп таблицу
+    author_id   int,
+    title           VARCHAR(50),
+    content       VARCHAR(2000),
+    CreatedAt     TIMESTAMP default current_timestamp,
+    UpdatedAt   TIMESTAMP default current_timestamp
+);
+
+CREATE TABLE tag_note_connection (
+    ID SERIAL PRIMARY KEY,
+    tag_ID INT REFERENCES tag(ID),
+    note_ID INT REFERENCES note(ID)
+);
