@@ -47,6 +47,20 @@ services:
     depends_on:
       - users-service
 
+  tasks-service:
+    build:
+      context: src/tasks
+      dockerfile: Dockerfile
+    image: drstarland/testus-tasks:1.0
+    container_name: testus-tasks
+    environment:
+      PORT: "8060"
+    ports:
+      - "8060:8060"
+    # depends_on:
+    #   - users-service
+
+
   gateway-service:
     build:
       context: src/gateway
@@ -59,7 +73,8 @@ services:
       - "8080:8080"
     depends_on:
       - users-service
-      - notes-service
+
+      # - notes-service
 
   # zookeeper:
   #   image: confluentinc/cp-zookeeper:7.3.2

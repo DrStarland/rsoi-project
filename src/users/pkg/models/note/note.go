@@ -12,6 +12,9 @@ import (
 	"github.com/asaskevich/govalidator"
 )
 
+type NoteInCreation struct {
+}
+
 type Note struct {
 	ID              int       `json:"id"`
 	Author          user.User `json:"author"` // author

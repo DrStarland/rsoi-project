@@ -3,17 +3,14 @@ package ticket
 import (
 	"database/sql"
 	"fmt"
-
-	dbx "github.com/go-ozzo/ozzo-dbx"
 )
 
 type TicketPostgresRepository struct {
-	DB     *sql.DB
-	trueDB *dbx.DB
+	DB *sql.DB
 }
 
-func NewPostgresRepo(db *dbx.DB) *TicketPostgresRepository {
-	return &TicketPostgresRepository{trueDB: db, DB: db.DB()}
+func NewPostgresRepo(db *sql.DB) *TicketPostgresRepository {
+	return &TicketPostgresRepository{DB: db}
 }
 
 func (repo *TicketPostgresRepository) GetByUsername(username string) ([]*Ticket, error) {
