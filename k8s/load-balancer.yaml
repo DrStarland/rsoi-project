@@ -11,5 +11,5 @@ spec:
     targetPort: 8080
   # Метки селектора, использованные в шаблоне подов при создании объекта Deployment.
   selector:
-    app: testum-gateway
+    app: testus-gateway
   type: LoadBalancer

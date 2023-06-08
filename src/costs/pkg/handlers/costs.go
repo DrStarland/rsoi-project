@@ -2,34 +2,33 @@ package handlers
 
 import (
 	"context"
+	"costs/pkg/models/cost"
+	"costs/pkg/myjson"
+	"costs/pkg/services"
 	"io"
 	"net/http"
 	"strconv"
-	"tasks/pkg/models/task"
-	"tasks/pkg/myjson"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
-type TasksHandler interface {
+type CostsHandler interface {
 	List(w http.ResponseWriter, r *http.Request)
 	Show(w http.ResponseWriter, r *http.Request)
 	Add(w http.ResponseWriter, r *http.Request)
 	Update(w http.ResponseWriter, r *http.Request)
 	Delete(w http.ResponseWriter, r *http.Request)
-
-	AddComment(w http.ResponseWriter, r *http.Request)
 }
 
-type TaskMainHandler struct {
+type CostMainHandler struct {
 	Logger  *zap.SugaredLogger
-	Repo    task.Repository
-	Service TaskService
+	Repo    cost.Repository
+	Service services.CostService
 }
 
-func (h TaskMainHandler) List(w http.ResponseWriter, r *http.Request) {
+func (h CostMainHandler) List(w http.ResponseWriter, r *http.Request) {
 	// lol := ps.ByName("id")
 	elems, err := h.Service.Query(r.Context(), 0, 64)
 	if err != nil {
@@ -40,7 +39,7 @@ func (h TaskMainHandler) List(w http.ResponseWriter, r *http.Request) {
 	myjson.JSONResponce(w, http.StatusOK, elems)
 }
 
-func (h TaskMainHandler) Show(w http.ResponseWriter, r *http.Request) {
+func (h CostMainHandler) Show(w http.ResponseWriter, r *http.Request) {
 	ps := httprouter.ParamsFromContext(r.Context())
 
 	id, err := strconv.Atoi(ps.ByName("id"))
@@ -49,17 +48,17 @@ func (h TaskMainHandler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := h.Service.Get(r.Context(), id)
+	cost, err := h.Service.Get(r.Context(), id)
 	if err != nil {
 		myjson.JSONResponce(w, http.StatusInternalServerError, errors.Wrap(err, ""))
 		return
 	}
 
-	myjson.JSONResponce(w, http.StatusOK, task)
+	myjson.JSONResponce(w, http.StatusOK, cost)
 }
 
-func (h *TaskMainHandler) Add(w http.ResponseWriter, r *http.Request) {
-	task := &task.TaskCreationRequest{}
+func (h *CostMainHandler) Add(w http.ResponseWriter, r *http.Request) {
+	cost := &cost.CostCreationRequest{}
 
 	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
@@ -68,7 +67,7 @@ func (h *TaskMainHandler) Add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = myjson.From(body, task); err != nil {
+	if err = myjson.From(body, cost); err != nil {
 		myjson.JSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -77,7 +76,7 @@ func (h *TaskMainHandler) Add(w http.ResponseWriter, r *http.Request) {
 		context.WithValue(
 			r.Context(), "X-UID", r.Header.Get("X-UID"),
 		), "X-User-Name", r.Header.Get("X-User-Name"))
-	res, err := h.Service.Create(test, task)
+	res, err := h.Service.Create(test, cost)
 	if err != nil {
 		myjson.JSONError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -86,7 +85,7 @@ func (h *TaskMainHandler) Add(w http.ResponseWriter, r *http.Request) {
 	myjson.JSONResponce(w, http.StatusCreated, res)
 }
 
-func (h TaskMainHandler) Update(w http.ResponseWriter, r *http.Request) {
+func (h CostMainHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ps := httprouter.ParamsFromContext(r.Context())
 
 	id, err := strconv.Atoi(ps.ByName("id"))
@@ -100,7 +99,7 @@ func (h TaskMainHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	taskRequest := &task.TaskCreationRequest{}
+	costRequest := &cost.CostCreationRequest{}
 
 	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
@@ -109,7 +108,7 @@ func (h TaskMainHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = myjson.From(body, taskRequest); err != nil {
+	if err = myjson.From(body, costRequest); err != nil {
 		myjson.JSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -118,7 +117,7 @@ func (h TaskMainHandler) Update(w http.ResponseWriter, r *http.Request) {
 		context.WithValue(r.Context(),
 			"X-UID", r.Header.Get("X-UID")),
 		"X-User-Name", r.Header.Get("X-User-Name"))
-	res, err := h.Service.Update(test, id, taskRequest)
+	res, err := h.Service.Update(test, id, costRequest)
 	if err != nil {
 		myjson.JSONError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -127,7 +126,7 @@ func (h TaskMainHandler) Update(w http.ResponseWriter, r *http.Request) {
 	myjson.JSONResponce(w, http.StatusCreated, res)
 }
 
-func (h TaskMainHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (h CostMainHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	ps := httprouter.ParamsFromContext(r.Context())
 
 	id, err := strconv.Atoi(ps.ByName("id"))
@@ -136,7 +135,7 @@ func (h TaskMainHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := h.Service.Delete(r.Context(), id)
+	cost, err := h.Service.Delete(r.Context(), id)
 
 	if err != nil {
 		switch err.Error() {
@@ -149,53 +148,10 @@ func (h TaskMainHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	myjson.JSONResponce(w, http.StatusNoContent, task)
+	myjson.JSONResponce(w, http.StatusNoContent, cost)
 }
 
-func (h TaskMainHandler) AddComment(w http.ResponseWriter, r *http.Request) {
-	ps := httprouter.ParamsFromContext(r.Context())
-
-	id, err := strconv.Atoi(ps.ByName("id"))
-	if err != nil {
-		myjson.JSONResponce(w, http.StatusBadRequest, errors.Wrap(err, "bad ID in URL"))
-	}
-
-	_, err = h.Service.Get(r.Context(), id)
-	if err != nil {
-		myjson.JSONResponce(w, http.StatusInternalServerError, errors.Wrap(err, ""))
-		return
-	}
-
-	commentRequest := &task.CommentCreationRequest{}
-
-	body, err := io.ReadAll(r.Body)
-	defer r.Body.Close()
-	if err != nil {
-		myjson.JSONError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	if err = myjson.From(body, commentRequest); err != nil {
-		myjson.JSONError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	test := context.WithValue(
-		context.WithValue(r.Context(),
-			"X-UID", r.Header.Get("X-UID")),
-		"X-User-Name", r.Header.Get("X-User-Name"))
-
-	// h.Logger.Infoln("!!", commentRequest)
-	res, err := h.Service.AddComment(test, id, *commentRequest)
-	if err != nil {
-		myjson.JSONError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	myjson.JSONResponce(w, http.StatusCreated, res)
-}
-
-// func (h TaskMainHandler) Create(w http.ResponseWriter, r *http.Request) error {
+// func (h CostMainHandler) Create(w http.ResponseWriter, r *http.Request) error {
 // 	var input CreateAlbumRequest
 // 	if err := c.Read(&input); err != nil {
 // 		r.logger.With(c.Request.Context()).Info(err)
@@ -206,7 +162,7 @@ func (h TaskMainHandler) AddComment(w http.ResponseWriter, r *http.Request) {
 // 		return err
 // 	}
 
-// 	myjson.JSONResponce(task, http.StatusCreated)
+// 	myjson.JSONResponce(cost, http.StatusCreated)
 // 	return c.WriteWithStatus(album, http.StatusCreated)
 // }
 
@@ -234,7 +190,7 @@ func (h TaskMainHandler) AddComment(w http.ResponseWriter, r *http.Request) {
 // 	return c.Write(album)
 // }
 
-// func (h TaskMainHandler) create(c *routing.Context) error {
+// func (h CostMainHandler) create(c *routing.Context) error {
 // 	var input CreateAlbumRequest
 // 	if err := c.Read(&input); err != nil {
 // 		r.logger.With(c.Request.Context()).Info(err)
@@ -248,7 +204,7 @@ func (h TaskMainHandler) AddComment(w http.ResponseWriter, r *http.Request) {
 // 	return c.WriteWithStatus(album, http.StatusCreated)
 // }
 
-// func (h TaskMainHandler) update(c *routing.Context) error {
+// func (h CostMainHandler) update(c *routing.Context) error {
 // 	var input UpdateAlbumRequest
 // 	if err := c.Read(&input); err != nil {
 // 		r.logger.With(c.Request.Context()).Info(err)
@@ -263,7 +219,7 @@ func (h TaskMainHandler) AddComment(w http.ResponseWriter, r *http.Request) {
 // 	return c.Write(album)
 // }
 
-// func (h TaskMainHandler) delete(c *routing.Context) error {
+// func (h CostMainHandler) delete(c *routing.Context) error {
 // 	album, err := h.Repo.Delete(c.Request.Context(), c.Param("id"))
 // 	if err != nil {
 // 		return err

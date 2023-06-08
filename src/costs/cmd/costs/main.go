@@ -1,9 +1,9 @@
 package main
 
 import (
+	"costs/pkg/initialization"
 	"net/http"
 	"os"
-	"tasks/pkg/initialization"
 
 	"go.uber.org/zap"
 )

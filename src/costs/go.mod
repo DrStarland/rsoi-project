@@ -1,4 +1,4 @@
-module tasks
+module costs
 
 go 1.20
 

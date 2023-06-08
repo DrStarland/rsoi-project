@@ -1,12 +1,12 @@
 package services
 
 import (
+	"costs/pkg/myjson"
+	"costs/pkg/utils"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
-	"tasks/pkg/myjson"
-	"tasks/pkg/utils"
 	"time"
 
 	"github.com/MicahParks/keyfunc"
@@ -31,12 +31,7 @@ type Token struct {
 }
 
 func newJWKs(rawJWKS string, logger *zap.SugaredLogger) *keyfunc.JWKS {
-	// Get the JWKS as JSON.
-	/// logger.Infoln("GOvno: ", rawJWKS)
 	jwksJSON := json.RawMessage(rawJWKS)
-	// jwksJSON, _ := myjson.To(rawJWKS)
-
-	// logger.Infoln("GOvno 2: ", jwksJSON)
 
 	jwks, err := keyfunc.NewJSON(jwksJSON)
 

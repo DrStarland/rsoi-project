@@ -1,15 +1,19 @@
 package initialization
 
 import (
+	"costs/pkg/handlers"
+	mid "costs/pkg/middleware"
+	"costs/pkg/models/cost"
+	"costs/pkg/models/income"
+	"costs/pkg/models/scope"
+	"costs/pkg/myjson"
+	"costs/pkg/services"
+	"costs/pkg/utils"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strings"
-	"tasks/pkg/handlers"
-	mid "tasks/pkg/middleware"
-	"tasks/pkg/models/task"
-	"tasks/pkg/utils"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	"github.com/julienschmidt/httprouter"
@@ -71,18 +75,26 @@ func (app App) initRouter() App {
 
 	// repoTicket := ticket.NewPostgresRepo(db)
 	// tak := dbcontext.New(app.DB)
-	repoTasks := task.NewMemoryRepository(app.Logger)
+	repoCosts := cost.NewMemoryRepository(app.Logger)
+	repoIncomes := income.NewMemoryRepository(app.Logger)
 
-	taskHandler := &handlers.TaskMainHandler{
+	costHandler := &handlers.CostMainHandler{
 		Logger:  app.Logger,
-		Repo:    repoTasks,
-		Service: handlers.NewTaskService(repoTasks, *app.Logger),
+		Repo:    repoCosts,
+		Service: services.NewCostService(repoCosts, *app.Logger),
 	}
 
-	// ticketHandler := &handlers.TicketsHandler{
-	// 	Logger:      logger,
-	// 	TicketsRepo: repoTicket,
-	// }
+	incomeHandler := &handlers.IncomeMainHandler{
+		Logger:  app.Logger,
+		Repo:    repoIncomes,
+		Service: services.NewIncomeService(repoIncomes, *app.Logger),
+	}
+
+	calcHandler := &handlers.CalcMainHandler{
+		Logger:        app.Logger,
+		CostsSource:   costHandler.Service,
+		IncomesSource: incomeHandler.Service,
+	}
 
 	router := httprouter.New()
 	router.PanicHandler = func(w http.ResponseWriter, r *http.Request, err interface{}) {
@@ -118,7 +130,7 @@ func (app App) initRouter() App {
 	// }
 
 	api := swag.New(
-		option.Title("Tasks Service API Doc"),
+		option.Title("Costs Service API Doc"),
 		option.Security("Sophisticated_Service_auth", "user", "admin"),
 		option.SecurityScheme("Sophisticated_Service_auth",
 			// option.OAuth2Security("accessCode", "http://example.com/oauth/authorize", "http://example.com/oauth/token"),
@@ -130,7 +142,9 @@ func (app App) initRouter() App {
 	)
 
 	api.AddTag("Healthcheck and statistics", "")
-	api.AddTag("Tasks", "")
+	api.AddTag("Costs", "")
+	api.AddTag("Incomes", "")
+	api.AddTag("Balance", "")
 
 	api.AddEndpoint(
 		endpoint.New(
@@ -142,76 +156,133 @@ func (app App) initRouter() App {
 		),
 
 		endpoint.New(
-			http.MethodGet, "/tasks",
+			http.MethodGet, "/costs",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(taskHandler.List, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(costHandler.List, app.Logger), app.Logger),
 			),
-			endpoint.Summary("Возвращает список заметок"),
+			endpoint.Summary("Возвращает список расходов"),
 			endpoint.Response(http.StatusOK, ""),
-			endpoint.Tags("Tasks"),
+			endpoint.Tags("Costs"),
 		),
 		endpoint.New(
-			http.MethodGet, "/tasks/{id}",
+			http.MethodGet, "/costs/{id}",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(taskHandler.Show, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(costHandler.Show, app.Logger), app.Logger),
 			),
-			endpoint.Summary("Получение задачи по ID"),
-			endpoint.Tags("Tasks"),
-			endpoint.Path("id", "integer", "ID of task to return", true),
-			endpoint.Response(http.StatusOK, "successful operation", endpoint.SchemaResponseOption(task.Task{})),
+			endpoint.Summary("Получение записи о расходе по ID"),
+			endpoint.Tags("Costs"),
+			endpoint.Path("id", "integer", "ID of cost to return", true),
+			endpoint.Response(http.StatusOK, "successful operation", endpoint.SchemaResponseOption(cost.Cost{})),
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		endpoint.New(
-			http.MethodPost, "/tasks",
+			http.MethodPost, "/costs",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(taskHandler.Add, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(costHandler.Add, app.Logger), app.Logger),
 			),
-			endpoint.Summary("Создание новой задачи"),
-			endpoint.Body(task.TaskCreationRequest{}, "Структура запроса на создание задачи", true),
-			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(task.Task{})),
-			endpoint.Tags("Tasks"),
+			endpoint.Summary("Создание новой записи о расходе"),
+			endpoint.Body(cost.CostCreationRequest{}, "Структура запроса на создание записи о расходе", true),
+			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(cost.Cost{})),
+			endpoint.Tags("Costs"),
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		endpoint.New(
-			http.MethodPut, "/tasks/{id}",
+			http.MethodPut, "/costs/{id}",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(taskHandler.Update, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(costHandler.Update, app.Logger), app.Logger),
 			),
-			endpoint.Summary("Редактирование существующей задачи"),
-			endpoint.Path("id", "integer", "ID of task to edit", true),
-			endpoint.Body(task.TaskCreationRequest{},
-				"Структура запроса на изменение задачи", true),
-			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(task.Task{})),
+			endpoint.Summary("Редактирование существующей записи о расходе"),
+			endpoint.Path("id", "integer", "ID of cost to edit", true),
+			endpoint.Body(cost.CostCreationRequest{},
+				"Структура запроса на изменение записи о расходе", true),
+			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(cost.Cost{})),
 			endpoint.Response(http.StatusBadRequest, ""),
-			endpoint.Tags("Tasks"),
+			endpoint.Tags("Costs"),
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		endpoint.New(
-			http.MethodDelete, "/tasks/{id}",
+			http.MethodDelete, "/costs/{id}",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(taskHandler.Delete, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(costHandler.Delete, app.Logger), app.Logger),
 			),
-			endpoint.Summary("Удаление задачи"),
-			endpoint.Path("id", "integer", "ID of task to delete", true),
+			endpoint.Summary("Удаление записи о расходе"),
+			endpoint.Path("id", "integer", "ID of cost to delete", true),
 			endpoint.Response(http.StatusNoContent, "successful"),
 			endpoint.Response(http.StatusNoContent, "Entity is not exist or already deleted", endpoint.SchemaResponseOption("not exist")),
-			endpoint.Tags("Tasks"),
+			endpoint.Tags("Costs"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		/////
+		endpoint.New(
+			http.MethodGet, "/incomes",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(incomeHandler.List, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Возвращает список доходов"),
+			endpoint.Response(http.StatusOK, ""),
+			endpoint.Tags("Incomes"),
+		),
+		endpoint.New(
+			http.MethodGet, "/incomes/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(incomeHandler.Show, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Получение записи о доходе по ID"),
+			endpoint.Tags("Incomes"),
+			endpoint.Path("id", "integer", "ID of income to return", true),
+			endpoint.Response(http.StatusOK, "successful operation", endpoint.SchemaResponseOption(income.Income{})),
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		endpoint.New(
-			http.MethodPost, "/tasks/{id}/comments",
+			http.MethodPost, "/incomes",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(taskHandler.AddComment, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(incomeHandler.Add, app.Logger), app.Logger),
 			),
-			endpoint.Summary("Добавление комментария к существующей задаче"),
-			endpoint.Path("id", "integer", "ID задачи для добавления комментария", true),
-			endpoint.Body(task.CommentCreationRequest{},
-				"Структура запроса на создание комментария", true),
-			endpoint.Response(http.StatusOK, "Успешное выполнение", endpoint.SchemaResponseOption(task.Task{})),
-			endpoint.Response(http.StatusBadRequest, ""),
-			endpoint.Tags("Comments"),
+			endpoint.Summary("Создание новой записи о доходе"),
+			endpoint.Body(income.IncomeCreationRequest{}, "Структура запроса на создание записи о доходе", true),
+			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(income.Income{})),
+			endpoint.Tags("Incomes"),
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
+		endpoint.New(
+			http.MethodPut, "/incomes/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(incomeHandler.Update, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Редактирование существующей записи о доходе"),
+			endpoint.Path("id", "integer", "ID of income to edit", true),
+			endpoint.Body(income.IncomeCreationRequest{},
+				"Структура запроса на изменение записи о доходе", true),
+			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(income.Income{})),
+			endpoint.Response(http.StatusBadRequest, ""),
+			endpoint.Tags("Incomes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodDelete, "/incomes/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(incomeHandler.Delete, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Удаление записи о доходе"),
+			endpoint.Path("id", "integer", "ID of income to delete", true),
+			endpoint.Response(http.StatusNoContent, "successful"),
+			endpoint.Response(http.StatusNoContent, "Entity is not exist or already deleted", endpoint.SchemaResponseOption("not exist")),
+			endpoint.Tags("Incomes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+
+		endpoint.New(
+			http.MethodPost, "/balance",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(calcHandler.TotalBalance, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Подсчёт баланса. Метод реализован как POST для того, чтобы у запроса могло быть тело."),
+			endpoint.Body(scope.Scope{}, "Для какой области видимости вычислить баланс", true),
+			endpoint.Response(http.StatusOK, "Balance result", endpoint.SchemaResponseOption(myjson.ResponceForm{})),
+			endpoint.Tags("Balance"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+
 		// endpoint.New(
 		// 	http.MethodPost, "/register",
 		// 	endpoint.Handler(authHandler.Register),

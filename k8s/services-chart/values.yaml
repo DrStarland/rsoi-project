@@ -1,40 +1,51 @@
-testum-bonus:
+testus-bonus:
   service:
     port: 8050
     image:
-      name: drstarland/testum-bonus
+      name: drstarland/testus-bonus
       version: "1.0"
     database:
       name: privileges
       username: program
       password: test
 
-testum-flights:
+testus-tasks:
   service:
     port: 8060
     image:
-      name: drstarland/testum-flights
+      name: drstarland/testus-tasks
       version: "1.0"
     database: 
       name: flights
       username: program
       password: test
 
-testum-tickets:
+testus-notes:
   service:
-    port: 8070
+    port: 8050
     image:
-      name: drstarland/testum-tickets
+      name: drstarland/testus-notes
+      version: "1.0"
+    database: 
+      name: flights
+      username: program
+      password: test
+
+testus-users:
+  service:
+    port: 8040
+    image:
+      name: drstarland/testus-users
       version: "1.0"
     database: 
       name: tickets
       username: program
       password: test
 
-testum-gateway:
+testus-gateway:
   service:
     port: 8080
     image:
-      name: drstarland/testum-gateway
+      name: drstarland/testus-gateway
       version: "1.0"
     isGateway: true

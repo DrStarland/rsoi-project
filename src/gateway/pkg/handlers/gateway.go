@@ -7,7 +7,7 @@ import (
 	"gateway/pkg/myjson"
 	"gateway/pkg/services"
 	"gateway/pkg/utils"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -292,7 +292,7 @@ func (h *GatewayHandler) BuyTicket(w http.ResponseWriter, r *http.Request, ps ht
 	// h.Logger.Infoln("CRINGE1 " + username)
 	var ticketInfo tickets.BuyTicketInfo
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		h.Logger.Infoln(err.Error())
 	}
