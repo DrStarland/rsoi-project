@@ -33,7 +33,7 @@ func NewAuthHandler(logger *zap.SugaredLogger) (h *AuthHandler) {
 func (ctrl *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	req, _ := http.NewRequest(
 		"POST",
-		fmt.Sprintf("%s/api/v1/register", utils.Config.IdentityProviderEndpoint),
+		fmt.Sprintf("%s/api/v1/register", utils.Config.UsersEndpoint),
 		r.Body,
 	)
 	req.Header.Add("Authorization", r.Header.Get("Authorization"))
@@ -51,7 +51,7 @@ func (ctrl *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ctrl *AuthHandler) Authorize(w http.ResponseWriter, r *http.Request) {
-	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/api/v1/authorize", utils.Config.IdentityProviderEndpoint), r.Body)
+	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/api/v1/authorize", utils.Config.UsersEndpoint), r.Body)
 
 	resp, err := ctrl.Client.Do(req)
 	if err != nil {

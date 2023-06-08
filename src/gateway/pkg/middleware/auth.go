@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
 
 	"gateway/pkg/services"
@@ -11,12 +10,14 @@ import (
 
 func Auth(next http.HandlerFunc, logger *zap.SugaredLogger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// ctx := session.ContextWithSession(r.Context(), sess)
-		ctx := context.TODO()
-		// next(w, r.WithContext(ctx))
-		if token, err := services.RetrieveToken(w, r); err == nil {
+		// r.Header.Set("X-User-Name", "mamont")
+		// r.Header.Set("X-UID", "2228745g")
+		// next(w, r)
+
+		if token, err := services.RetrieveToken(w, r, logger); err == nil {
 			r.Header.Set("X-User-Name", token.Subject)
-			next(w, r.WithContext(ctx))
+			r.Header.Set("X-UID", token.UID)
+			next(w, r)
 		}
 	}
 }

@@ -149,6 +149,7 @@ func (app App) initRouter() App {
 			endpoint.Summary("Возвращает список заметок"),
 			endpoint.Response(http.StatusOK, ""),
 			endpoint.Tags("Tasks"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		endpoint.New(
 			http.MethodGet, "/tasks/{id}",

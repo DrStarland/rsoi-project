@@ -7,6 +7,7 @@ import (
 	"notes/pkg/handlers"
 	mid "notes/pkg/middleware"
 	"notes/pkg/models/note"
+	"notes/pkg/services"
 	"notes/pkg/utils"
 	"os"
 	"strings"
@@ -76,7 +77,7 @@ func (app App) initRouter() App {
 	noteHandler := &handlers.NoteMainHandler{
 		Logger:  app.Logger,
 		Repo:    repoNotes,
-		Service: handlers.NewNoteService(repoNotes, *app.Logger),
+		Service: services.NewNoteService(repoNotes, *app.Logger),
 	}
 
 	// ticketHandler := &handlers.TicketsHandler{
@@ -92,31 +93,6 @@ func (app App) initRouter() App {
 		}
 	}
 
-	// 	ctrl := &AuthCtrl{auth}
-	// 	r.HandleFunc("/register", ctrl.Register).Methods("POST")
-	// 	r.HandleFunc("/authorize", ctrl.Authorize).Methods("POST")
-
-	// router.GET("/manage/health", ri\outer\HealthOK)
-
-	// type Category struct {
-	// 	ID     int64  `json:"category"`
-	// 	Name   string `json:"name" enum:"dog,cat" required:""`
-	// 	Exists *bool  `json:"exists" required:""`
-	// }
-
-	// // Pet example from the swagger pet store
-	// type Pet struct {
-	// 	ID        int64     `json:"id"`
-	// 	Category  *Category `json:"category" desc:"分类"`
-	// 	Name      string    `json:"name" required:"" example:"张三" desc:"名称"`
-	// 	PhotoUrls []string  `json:"photoUrls"`
-	// 	Tags      []string  `json:"tags" desc:"标签"`
-	// }
-
-	// handle := func(w http.ResponseWriter, r *http.Request) {
-	// 	_, _ = io.WriteString(w, fmt.Sprintf("[%s] Hello World!", r.Method))
-	// }
-
 	api := swag.New(
 		option.Title("Note Service API Doc"),
 		option.Security("Sophisticated_Service_auth", "user", "admin"),
@@ -131,17 +107,6 @@ func (app App) initRouter() App {
 
 	api.AddTag("Healthcheck and statistics", "")
 	api.AddTag("Notes", "")
-
-	// sm := session.NewSessionsManager()
-
-	// gs := &handlers.GatewayHandler{
-	// 	TicketServiceAddress: "http://testum-tickets:8070",
-	// 	FlightServiceAddress: "http://testum-flights:8060",
-	// 	BonusServiceAddress:  "http://testum-bonus:8050",
-	// 	Logger:               app.Logger,
-	// }
-	// router.GET("/api/v1/notes", mid.AccessLog(noteHandler.List, app.Logger))
-	// router.GET("/api/v1/notes/:id", mid.AccessLog(noteHandler.Show, app.Logger))
 
 	api.AddEndpoint(
 		endpoint.New(
@@ -160,6 +125,7 @@ func (app App) initRouter() App {
 			endpoint.Summary("Возвращает список заметок"),
 			endpoint.Response(http.StatusOK, ""),
 			endpoint.Tags("Notes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		endpoint.New(
 			http.MethodGet, "/notes/{id}",
@@ -209,55 +175,6 @@ func (app App) initRouter() App {
 			endpoint.Tags("Notes"),
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
-		// endpoint.New(
-		// 	http.MethodPost, "/register",
-		// 	endpoint.Handler(authHandler.Register),
-		// 	//endpoint.HeaderResponseOption()
-		// 	endpoint.Summary("Регистрация пользователя"),
-		// 	endpoint.Body(authorization.UserCreateRequest{}, "Структура запроса на создание пользователя", true),
-
-		// 	endpoint.Response(http.StatusOK, "Registration was successful"),
-		// 	endpoint.Tags("Authorization"),
-		// ),
-
-		// endpoint.New(
-		// 	http.MethodPost, "/register",
-		// 	endpoint.Handler(authHandler.Register),
-		// 	//endpoint.HeaderResponseOption()
-		// 	endpoint.Summary("Регистрация пользователя"),
-		// 	endpoint.Body(authorization.UserCreateRequest{}, "Структура запроса на создание пользователя", true),
-
-		// 	endpoint.Response(http.StatusOK, "Registration was successful"),
-		// 	endpoint.Tags("Authorization"),
-		// ),
-	// endpoint.New(
-	// 	http.MethodPost, "/pet",
-	// 	endpoint.Handler(handle),
-	// 	endpoint.Summary("Add a new pet to the store"),
-	// 	endpoint.Description("Additional information on adding a pet to the store"),
-	// 	endpoint.Body(Pet{}, "Pet object that needs to be added to the store", true),
-	// 	endpoint.Response(http.StatusOK, "Successfully added pet", endpoint.SchemaResponseOption(Pet{})), //End Schema(P)),
-	// 	endpoint.Security("petstore_auth", "read:pets", "write:pets"),
-	// 	endpoint.Tags("section"),
-	// ),
-	// endpoint.New(
-	// 	http.MethodGet, "/pet/{petId}",
-	// 	endpoint.Handler(handle),
-	// 	endpoint.Summary("Find pet by ID"),
-	// 	endpoint.Path("petId", "integer", "ID of pet to return", true),
-	// 	endpoint.Response(http.StatusOK, "successful operation", endpoint.SchemaResponseOption(Pet{})),
-	// 	endpoint.Security("petstore_auth", "read:pets"),
-	// ),
-	// endpoint.New(
-	// 	http.MethodPut, "/pet/{petId}",
-	// 	endpoint.Handler(handle),
-	// 	endpoint.Path("petId", "integer", "ID of pet to return", true),
-	// 	endpoint.Security("petstore_auth", "read:pets"),
-	// 	endpoint.ResponseSuccess(endpoint.SchemaResponseOption(struct {
-	// 		ID   string `json:"id"`
-	// 		Name string `json:"name"`
-	// 	}{})),
-	// ),
 	)
 
 	swag.New()

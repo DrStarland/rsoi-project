@@ -2,10 +2,10 @@ package cost
 
 import (
 	"context"
-	"costs/pkg/models/scope"
-	"costs/pkg/models/timestamp"
-	"costs/pkg/models/user"
 	"fmt"
+	"gateway/pkg/models/scope"
+	"gateway/pkg/models/timestamp"
+	"gateway/pkg/models/user"
 	"log"
 
 	// валидатор

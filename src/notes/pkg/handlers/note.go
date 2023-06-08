@@ -21,6 +21,16 @@ type NotesHandler interface {
 	Delete(w http.ResponseWriter, r *http.Request)
 }
 
+// Service encapsulates usecase logic for albums.
+type NoteService interface {
+	Get(ctx context.Context, id int) (note.Note, error)
+	Query(ctx context.Context, offset, limit int) ([]note.Note, error)
+	Count(ctx context.Context) (int, error)
+	Create(ctx context.Context, input *note.NoteCreationRequest) (note.Note, error)
+	Update(ctx context.Context, id int, input *note.NoteCreationRequest) (note.Note, error)
+	Delete(ctx context.Context, id int) (note.Note, error)
+}
+
 type NoteMainHandler struct {
 	Logger  *zap.SugaredLogger
 	Repo    note.Repository

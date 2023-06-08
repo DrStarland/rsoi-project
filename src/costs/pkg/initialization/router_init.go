@@ -163,6 +163,7 @@ func (app App) initRouter() App {
 			endpoint.Summary("Возвращает список расходов"),
 			endpoint.Response(http.StatusOK, ""),
 			endpoint.Tags("Costs"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		endpoint.New(
 			http.MethodGet, "/costs/{id}",
@@ -221,6 +222,7 @@ func (app App) initRouter() App {
 			endpoint.Summary("Возвращает список доходов"),
 			endpoint.Response(http.StatusOK, ""),
 			endpoint.Tags("Incomes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		endpoint.New(
 			http.MethodGet, "/incomes/{id}",

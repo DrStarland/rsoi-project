@@ -6,6 +6,11 @@ import (
 	"net/http"
 )
 
+type ResponceForm struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+}
+
 func To(input any) ([]byte, error) {
 	return json.Marshal(input)
 }

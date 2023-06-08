@@ -5,6 +5,12 @@ import (
 	"gateway/pkg/handlers"
 	mid "gateway/pkg/middleware"
 	"gateway/pkg/models/authorization"
+	"gateway/pkg/models/cost"
+	"gateway/pkg/models/income"
+	"gateway/pkg/models/note"
+	"gateway/pkg/models/scope"
+	"gateway/pkg/models/task"
+	"gateway/pkg/myjson"
 
 	// "users/pkg/models/authorization"
 
@@ -77,17 +83,6 @@ func PlugToDo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app App) initRouter() App {
-
-	// repoTicket := ticket.NewPostgresRepo(db)
-	// tak := dbcontext.New(app.DB)
-	// repoNotes := note.NewRepository(tak, app.Logger)
-
-	// noteHandler := &handlers.NoteMainHandler{
-	// 	Logger:  app.Logger,
-	// 	Repo:    repoNotes,
-	// 	Service: handlers.NewNoteService(repoNotes, *app.Logger),
-	// }
-
 	router := httprouter.New()
 	router.PanicHandler = func(w http.ResponseWriter, r *http.Request, err interface{}) {
 		log.Println("panicMiddleware is working", r.URL.Path)
@@ -96,43 +91,20 @@ func (app App) initRouter() App {
 		}
 	}
 
-	// client := &http.Client{}
-
-	// auth_var := models.NewAuthM(client)
-	// ctrl := &auth.AuthCtrl{Auth: auth_var}
-
 	authHandler := handlers.NewAuthHandler(app.Logger)
-
-	// 	ctrl := &AuthCtrl{auth}
-	// 	r.HandleFunc("/register", ctrl.Register).Methods("POST")
-	// 	r.HandleFunc("/authorize", ctrl.Authorize).Methods("POST")
-
-	// router.GET("/manage/health", ri\outer\HealthOK)
-
-	// type Category struct {
-	// 	ID     int64  `json:"category"`
-	// 	Name   string `json:"name" enum:"dog,cat" required:""`
-	// 	Exists *bool  `json:"exists" required:""`
-	// }
-
-	// // Pet example from the swagger pet store
-	// type Pet struct {
-	// 	ID        int64     `json:"id"`
-	// 	Category  *Category `json:"category" desc:"分类"`
-	// 	Name      string    `json:"name" required:"" example:"张三" desc:"名称"`
-	// 	PhotoUrls []string  `json:"photoUrls"`
-	// 	Tags      []string  `json:"tags" desc:"标签"`
-	// }
-
-	// handle := func(w http.ResponseWriter, r *http.Request) {
-	// 	_, _ = io.WriteString(w, fmt.Sprintf("[%s] Hello World!", r.Method))
-	// }
+	taskHandler := handlers.NewTaskHandler(app.Logger)
+	noteHandler := handlers.NewNoteHandler(app.Logger)
+	incomeHandler := handlers.NewIncomeHandler(app.Logger)
+	costHandler := handlers.NewCostHandler(app.Logger)
+	calcHandler := handlers.NewCalcHandler(app.Logger)
 
 	api := swag.New(
 		option.Title("Costs-n-tasks API Doc"),
-		option.Security("user_auth", "read:pets"),
-		option.SecurityScheme("user_auth",
-			option.OAuth2Security("accessCode", "http://example.com/oauth/authorize", "http://example.com/oauth/token"),
+		option.Security("Sophisticated_Service_auth", "user", "admin"),
+
+		option.SecurityScheme("Sophisticated_Service_auth",
+			// option.OAuth2Security("accessCode", "http://example.com/oauth/authorize", "http://example.com/oauth/token"),
+			option.APIKeySecurity("Authorization", "header"),
 			option.OAuth2Scope("admin", ""),
 			option.OAuth2Scope("user", ""),
 		),
@@ -142,6 +114,10 @@ func (app App) initRouter() App {
 	api.AddTag("Healthcheck and statistics", "")
 	api.AddTag("Authorization", "")
 	api.AddTag("Tasks", "")
+	api.AddTag("Notes", "")
+	api.AddTag("Costs", "")
+	api.AddTag("Incomes", "")
+	api.AddTag("Balance", "")
 
 	api.AddEndpoint(
 		// СЕРВИС
@@ -172,6 +148,64 @@ func (app App) initRouter() App {
 			endpoint.Tags("Authorization"),
 		),
 		// ЗАПИСКИ
+		endpoint.New(
+			http.MethodGet, "/notes",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(noteHandler.List, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Возвращает список заметок"),
+			endpoint.Response(http.StatusOK, ""),
+			endpoint.Tags("Notes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodGet, "/notes/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(noteHandler.Show, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Получение заметки по ID"),
+			endpoint.Tags("Notes"),
+			endpoint.Path("id", "integer", "ID of note to return", true),
+			endpoint.Response(http.StatusOK, "successful operation", endpoint.SchemaResponseOption(note.Note{})),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodPost, "/notes",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(noteHandler.Add, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Создание новой заметки"),
+			endpoint.Body(note.NoteCreationRequest{}, "Структура запроса на создание заметки", true),
+			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(note.Note{})),
+			endpoint.Tags("Notes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodPut, "/notes/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(noteHandler.Update, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Редактирование существующей заметки"),
+			endpoint.Path("id", "integer", "ID of note to edit", true),
+			endpoint.Body(note.NoteCreationRequest{},
+				"Структура запроса на изменение заметки", true),
+			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(note.Note{})),
+			endpoint.Response(http.StatusBadRequest, ""),
+			endpoint.Tags("Notes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodDelete, "/notes/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(noteHandler.Delete, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Удаление заметки"),
+			endpoint.Path("id", "integer", "ID of note to delete", true),
+			endpoint.Response(http.StatusNoContent, "successful"),
+			endpoint.Response(http.StatusNoContent, "Entity is not exist or already deleted", endpoint.SchemaResponseOption("not exist")),
+			endpoint.Tags("Notes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
 		// ЗАДАЧИ
 		endpoint.New(
 			http.MethodGet, "/manage/health",
@@ -189,6 +223,7 @@ func (app App) initRouter() App {
 			endpoint.Summary("Возвращает список заметок"),
 			endpoint.Response(http.StatusOK, ""),
 			endpoint.Tags("Tasks"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		endpoint.New(
 			http.MethodGet, "/tasks/{id}",
@@ -210,6 +245,7 @@ func (app App) initRouter() App {
 			endpoint.Body(task.TaskCreationRequest{}, "Структура запроса на создание задачи", true),
 			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(task.Task{})),
 			endpoint.Tags("Tasks"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		endpoint.New(
@@ -253,6 +289,135 @@ func (app App) initRouter() App {
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		// ЗАПИСИ ДОХОДОВ И РАСХОДОВ
+		endpoint.New(
+			http.MethodGet, "/costs",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(costHandler.List, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Возвращает список расходов"),
+			endpoint.Response(http.StatusOK, ""),
+			endpoint.Tags("Costs"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodGet, "/gateway/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(costHandler.Show, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Получение записи о расходе по ID"),
+			endpoint.Tags("Costs"),
+			endpoint.Path("id", "integer", "ID of cost to return", true),
+			endpoint.Response(http.StatusOK, "successful operation", endpoint.SchemaResponseOption(cost.Cost{})),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodPost, "/costs",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(costHandler.Add, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Создание новой записи о расходе"),
+			endpoint.Body(cost.CostCreationRequest{}, "Структура запроса на создание записи о расходе", true),
+			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(cost.Cost{})),
+			endpoint.Tags("Costs"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodPut, "/gateway/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(costHandler.Update, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Редактирование существующей записи о расходе"),
+			endpoint.Path("id", "integer", "ID of cost to edit", true),
+			endpoint.Body(cost.CostCreationRequest{},
+				"Структура запроса на изменение записи о расходе", true),
+			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(cost.Cost{})),
+			endpoint.Response(http.StatusBadRequest, ""),
+			endpoint.Tags("Costs"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodDelete, "/gateway/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(costHandler.Delete, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Удаление записи о расходе"),
+			endpoint.Path("id", "integer", "ID of cost to delete", true),
+			endpoint.Response(http.StatusNoContent, "successful"),
+			endpoint.Response(http.StatusNoContent, "Entity is not exist or already deleted", endpoint.SchemaResponseOption("not exist")),
+			endpoint.Tags("Costs"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		/////
+		endpoint.New(
+			http.MethodGet, "/incomes",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(incomeHandler.List, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Возвращает список доходов"),
+			endpoint.Response(http.StatusOK, ""),
+			endpoint.Tags("Incomes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodGet, "/incomes/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(incomeHandler.Show, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Получение записи о доходе по ID"),
+			endpoint.Tags("Incomes"),
+			endpoint.Path("id", "integer", "ID of income to return", true),
+			endpoint.Response(http.StatusOK, "successful operation", endpoint.SchemaResponseOption(income.Income{})),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodPost, "/incomes",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(incomeHandler.Add, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Создание новой записи о доходе"),
+			endpoint.Body(income.IncomeCreationRequest{}, "Структура запроса на создание записи о доходе", true),
+			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(income.Income{})),
+			endpoint.Tags("Incomes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodPut, "/incomes/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(incomeHandler.Update, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Редактирование существующей записи о доходе"),
+			endpoint.Path("id", "integer", "ID of income to edit", true),
+			endpoint.Body(income.IncomeCreationRequest{},
+				"Структура запроса на изменение записи о доходе", true),
+			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(income.Income{})),
+			endpoint.Response(http.StatusBadRequest, ""),
+			endpoint.Tags("Incomes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodDelete, "/incomes/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(incomeHandler.Delete, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Удаление записи о доходе"),
+			endpoint.Path("id", "integer", "ID of income to delete", true),
+			endpoint.Response(http.StatusNoContent, "successful"),
+			endpoint.Response(http.StatusNoContent, "Entity is not exist or already deleted", endpoint.SchemaResponseOption("not exist")),
+			endpoint.Tags("Incomes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+
+		endpoint.New(
+			http.MethodPost, "/balance",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(calcHandler.TotalBalance, app.Logger), app.Logger),
+			),
+			endpoint.Summary("Подсчёт баланса. Метод реализован как POST для того, чтобы у запроса могло быть тело."),
+			endpoint.Body(scope.Scope{}, "Для какой области видимости вычислить баланс", true),
+			endpoint.Response(http.StatusOK, "Balance result", endpoint.SchemaResponseOption(myjson.ResponceForm{})),
+			endpoint.Tags("Balance"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
 		// СТАТИСТИКА
 	)
 

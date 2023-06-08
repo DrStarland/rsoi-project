@@ -3,10 +3,10 @@ package note
 import (
 	"context"
 	"fmt"
+	"gateway/pkg/models/scope"
+	"gateway/pkg/models/timestamp"
+	"gateway/pkg/models/user"
 	"log"
-	"notes/pkg/models/scope"
-	"notes/pkg/models/timestamp"
-	"notes/pkg/models/user"
 
 	// валидатор
 	"github.com/asaskevich/govalidator"

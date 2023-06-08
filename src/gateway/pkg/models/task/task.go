@@ -3,11 +3,11 @@ package task
 import (
 	"context"
 	"fmt"
+	"gateway/pkg/models/scope"
+	"gateway/pkg/models/timestamp"
+	"gateway/pkg/models/user"
 	"log"
 	"sync"
-	"tasks/pkg/models/scope"
-	"tasks/pkg/models/timestamp"
-	"tasks/pkg/models/user"
 
 	// валидатор
 	"github.com/asaskevich/govalidator"

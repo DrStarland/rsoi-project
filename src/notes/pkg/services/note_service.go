@@ -1,4 +1,4 @@
-package handlers
+package services
 
 import (
 	"context"
@@ -9,16 +9,6 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
-
-// Service encapsulates usecase logic for albums.
-type NoteService interface {
-	Get(ctx context.Context, id int) (obj.Note, error)
-	Query(ctx context.Context, offset, limit int) ([]obj.Note, error)
-	Count(ctx context.Context) (int, error)
-	Create(ctx context.Context, input *obj.NoteCreationRequest) (obj.Note, error)
-	Update(ctx context.Context, id int, input *obj.NoteCreationRequest) (obj.Note, error)
-	Delete(ctx context.Context, id int) (obj.Note, error)
-}
 
 // // CreateAlbumRequest represents an album creation request.
 // type CreateAlbumRequest struct {
