@@ -28,7 +28,7 @@ func InitKafka(logger *zap.SugaredLogger) *KafkaSettings {
 	}
 
 	for err != nil {
-		time.Sleep(3 * time.Second)
+		time.Sleep(5 * time.Second)
 		producer, err = sarama.NewSyncProducer(kafkaBrokers, config)
 		logger.Errorln("Error creating Kafka producer: %v", err)
 	}
