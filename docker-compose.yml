@@ -10,19 +10,19 @@ networks:
         - subnet: 172.28.0.0/16
 
 services:
-  # postgres:
-  #   image: library/postgres:15
-  #   container_name: postgres
-  #   restart: on-failure
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: "postgres"
-  #     POSTGRES_DB: postgres
-  #   volumes:
-  #     - db-data:/var/lib/postgresql/data
-  #     - ./postgres/:/docker-entrypoint-initdb.d/
-  #   ports:
-  #     - "5432:5432"
+  postgres:
+    image: library/postgres:15
+    container_name: postgres
+    restart: on-failure
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./postgres/:/docker-entrypoint-initdb.d/
+    ports:
+      - "5432:5432"
 
   users-service:
     build:
@@ -34,6 +34,7 @@ services:
       PORT: "8040"
     ports:
       - "8040:8040"
+    restart: on-failure
 
   notes-service:
     build:
@@ -47,6 +48,7 @@ services:
       - "8050:8050"
     depends_on:
       - users-service
+    restart: on-failure
 
   tasks-service:
     build:
@@ -58,6 +60,7 @@ services:
       PORT: "8060"
     ports:
       - "8060:8060"
+    restart: on-failure
 
   costs-service:
     build:
@@ -69,9 +72,57 @@ services:
       PORT: "8070"
     ports:
       - "8070:8070"
+    restart: on-failure
     # depends_on:
     #   - users-service
 
+  # statistics-service:
+  #   build:
+  #     context: src/statistics
+  #     dockerfile: Dockerfile
+  #   image: drstarland/testus-statistics:1.0
+  #   environment:
+  #     PORT: "8030"
+  #   ports:
+  #     - "8030:8030"
+  #   depends_on:
+  #     - kafka
+  #     - postgres
+  #   links: 
+  #     - postgres
+  #   restart: on-failure
+
+  zookeeper-service:
+    image: confluentinc/cp-zookeeper:7.3.2
+    container_name: testus-zookeeper
+    ports:
+      - '31000:31000'
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      KAFKA_JMX_HOSTNAME: "localhost"
+      KAFKA_JMX_PORT: 31000
+
+  kafka-service:
+    image: confluentinc/cp-kafka:7.3.2
+    container_name: testus-kafka
+    ports:
+      - '9092:9092'
+      - '31001:31001'
+    depends_on:
+      - zookeeper-service
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: testus-zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://testus-kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 100
+      KAFKA_JMX_HOSTNAME: "localhost"
+      KAFKA_JMX_PORT: 31001
+    restart: on-failure
 
   gateway-service:
     build:
@@ -84,9 +135,12 @@ services:
     ports:
       - "8080:8080"
     depends_on:
+      - costs-service
+      - notes-service
+      - tasks-service
       - users-service
-
-      # - notes-service
+      - kafka-service
+    restart: on-failure
 
   # zookeeper:
   #   image: confluentinc/cp-zookeeper:7.3.2
@@ -114,58 +168,40 @@ services:
   #   depends_on:
   #     - zookeeper
 
-# TODO добавить сервисы
-
-  # note-service:
-  #   build:
-  #     context: src/notes
-  #     dockerfile: Dockerfile
-  #   image: drstarland/testus-notes:1.0
-  #   container_name: testus-notes
+  # zookeeper:
+  #   image: confluentinc/cp-zookeeper:7.3.2
+  #   container_name: zookeeper
   #   environment:
-  #     PORT: "8070"
+  #     ZOOKEEPER_CLIENT_PORT: 2181
+  #     ZOOKEEPER_TICK_TIME: 2000
+  #     KAFKA_JMX_HOSTNAME: "localhost"
+  #     KAFKA_JMX_PORT: 31001
   #   ports:
-  #     - "8070:8070"
+  #     - "22181:2181"
+
+  # kafka:
+  #   image: confluentinc/cp-kafka:7.3.2
+  #   container_name: kafka-1
+  #   ports:
+  #     - "9092:9092"
+  #     - "31001:31001"
+  #     - "29092:29092"
+  #   environment:
+  #     KAFKA_BROKER_ID: 1
+  #     KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+  #     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+  #     KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+  #     KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+  #     # KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  #     KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 100
+  #     # CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka:29092
+  #     # CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper:2181
+  #     # CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+  #     # CONFLUENT_METRICS_ENABLE: 'false'
+  #     # CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+  #     KAFKA_JMX_HOSTNAME: "localhost"
+  #     KAFKA_JMX_PORT: 31001
   #   depends_on:
-  #     - postgres
-
-  # flight-service:
-  #   build:
-  #     context: src/flights
-  #     dockerfile: Dockerfile
-  #   image: drstarland/testus-flights:1.0
-  #   container_name: testus-flights
-  #   environment:
-  #     PORT: "8060"
-  #   ports:
-  #     - "8060:8060"
-  #   depends_on:
-  #     - postgres
-
-  # bonus-service:
-  #   build:
-  #     context: src/bonus
-  #     dockerfile: Dockerfile
-  #   image: drstarland/testus-bonus:1.0
-  #   container_name: testus-bonus
-  #   environment:
-  #     PORT: "8050"
-  #   ports:
-  #     - "8050:8050"
-
-  # gateway-service:
-  #   build:
-  #     context: src/gateway
-  #     dockerfile: Dockerfile
-  #   image: drstarland/testus-gateway:1.0
-  #   container_name: testus-gateway
-  #   environment:
-  #     PORT: "8080"
-  #   ports:
-  #     - "8080:8080"
-  #   depends_on:
-  #     - flight-service
-  #     - ticket-service
-  #     - bonus-service
-
-
+  #     - zookeeper

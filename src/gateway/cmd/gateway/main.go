@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"os"
+	"time"
 
 	"gateway/pkg/initialization"
 
@@ -10,6 +11,7 @@ import (
 )
 
 func main() {
+	time.Sleep(5 * time.Second)
 	zapLogger, _ := zap.NewProduction()
 	defer zapLogger.Sync() // flushes buffer, if any
 	logger := zapLogger.Sugar()

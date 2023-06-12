@@ -98,6 +98,8 @@ func (app App) initRouter() App {
 	costHandler := handlers.NewCostHandler(app.Logger)
 	calcHandler := handlers.NewCalcHandler(app.Logger)
 
+	kafka := InitKafka(app.Logger)
+
 	api := swag.New(
 		option.Title("Costs-n-tasks API Doc"),
 		option.Security("Sophisticated_Service_auth", "user", "admin"),
@@ -123,7 +125,9 @@ func (app App) initRouter() App {
 		// СЕРВИС
 		endpoint.New(
 			http.MethodGet, "/manage/health",
-			endpoint.Handler(mid.AccessLog(HealthOK, app.Logger)),
+			endpoint.Handler(
+				mid.AccessLog(HealthOK, app.Logger, kafka.Topic, kafka.Producer),
+			),
 			endpoint.Summary(""),
 			endpoint.Response(http.StatusOK, "Server available"),
 			endpoint.Tags("Healthcheck and statistics"),
@@ -131,7 +135,9 @@ func (app App) initRouter() App {
 		// АВТОРИЗАЦИЯ
 		endpoint.New(
 			http.MethodPost, "/authorize",
-			endpoint.Handler(authHandler.Authorize),
+			endpoint.Handler(
+				mid.AccessLog(authHandler.Authorize, app.Logger, kafka.Topic, kafka.Producer),
+			),
 			endpoint.Summary("Авторизация пользователя"),
 			endpoint.Body(authorization.AuthRequest{}, "Структура запроса на создание пользователя", true),
 
@@ -140,7 +146,9 @@ func (app App) initRouter() App {
 		),
 		endpoint.New(
 			http.MethodPost, "/register",
-			endpoint.Handler(authHandler.Register),
+			endpoint.Handler(
+				mid.AccessLog(authHandler.Register, app.Logger, kafka.Topic, kafka.Producer),
+			),
 			endpoint.Summary("Регистрация пользователя"),
 			endpoint.Body(authorization.UserCreateRequest{}, "Структура запроса на создание пользователя", true),
 
@@ -151,7 +159,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodGet, "/notes",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(noteHandler.List, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(noteHandler.List, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Возвращает список заметок"),
 			endpoint.Response(http.StatusOK, ""),
@@ -161,7 +169,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodGet, "/notes/{id}",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(noteHandler.Show, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(noteHandler.Show, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Получение заметки по ID"),
 			endpoint.Tags("Notes"),
@@ -172,7 +180,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodPost, "/notes",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(noteHandler.Add, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(noteHandler.Add, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Создание новой заметки"),
 			endpoint.Body(note.NoteCreationRequest{}, "Структура запроса на создание заметки", true),
@@ -183,7 +191,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodPut, "/notes/{id}",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(noteHandler.Update, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(noteHandler.Update, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Редактирование существующей заметки"),
 			endpoint.Path("id", "integer", "ID of note to edit", true),
@@ -197,7 +205,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodDelete, "/notes/{id}",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(noteHandler.Delete, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(noteHandler.Delete, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Удаление заметки"),
 			endpoint.Path("id", "integer", "ID of note to delete", true),
@@ -208,17 +216,9 @@ func (app App) initRouter() App {
 		),
 		// ЗАДАЧИ
 		endpoint.New(
-			http.MethodGet, "/manage/health",
-			endpoint.Handler(mid.AccessLog(HealthOK, app.Logger)),
-			endpoint.Summary(""),
-			endpoint.Response(http.StatusOK, "Server available"),
-			endpoint.Tags("Healthcheck and statistics"),
-		),
-
-		endpoint.New(
 			http.MethodGet, "/tasks",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(taskHandler.List, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(taskHandler.List, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Возвращает список заметок"),
 			endpoint.Response(http.StatusOK, ""),
@@ -228,7 +228,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodGet, "/tasks/{id}",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(taskHandler.Show, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(taskHandler.Show, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Получение задачи по ID"),
 			endpoint.Tags("Tasks"),
@@ -239,7 +239,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodPost, "/tasks",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(taskHandler.Add, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(taskHandler.Add, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Создание новой задачи"),
 			endpoint.Body(task.TaskCreationRequest{}, "Структура запроса на создание задачи", true),
@@ -251,7 +251,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodPut, "/tasks/{id}",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(taskHandler.Update, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(taskHandler.Update, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Редактирование существующей задачи"),
 			endpoint.Path("id", "integer", "ID of task to edit", true),
@@ -265,7 +265,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodDelete, "/tasks/{id}",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(taskHandler.Delete, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(taskHandler.Delete, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Удаление задачи"),
 			endpoint.Path("id", "integer", "ID of task to delete", true),
@@ -277,7 +277,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodPost, "/tasks/{id}/comments",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(taskHandler.AddComment, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(taskHandler.AddComment, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Добавление комментария к существующей задаче"),
 			endpoint.Path("id", "integer", "ID задачи для добавления комментария", true),
@@ -292,7 +292,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodGet, "/costs",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(costHandler.List, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(costHandler.List, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Возвращает список расходов"),
 			endpoint.Response(http.StatusOK, ""),
@@ -302,7 +302,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodGet, "/gateway/{id}",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(costHandler.Show, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(costHandler.Show, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Получение записи о расходе по ID"),
 			endpoint.Tags("Costs"),
@@ -313,7 +313,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodPost, "/costs",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(costHandler.Add, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(costHandler.Add, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Создание новой записи о расходе"),
 			endpoint.Body(cost.CostCreationRequest{}, "Структура запроса на создание записи о расходе", true),
@@ -324,7 +324,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodPut, "/gateway/{id}",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(costHandler.Update, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(costHandler.Update, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Редактирование существующей записи о расходе"),
 			endpoint.Path("id", "integer", "ID of cost to edit", true),
@@ -338,7 +338,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodDelete, "/gateway/{id}",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(costHandler.Delete, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(costHandler.Delete, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Удаление записи о расходе"),
 			endpoint.Path("id", "integer", "ID of cost to delete", true),
@@ -351,7 +351,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodGet, "/incomes",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(incomeHandler.List, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(incomeHandler.List, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Возвращает список доходов"),
 			endpoint.Response(http.StatusOK, ""),
@@ -361,7 +361,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodGet, "/incomes/{id}",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(incomeHandler.Show, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(incomeHandler.Show, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Получение записи о доходе по ID"),
 			endpoint.Tags("Incomes"),
@@ -372,7 +372,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodPost, "/incomes",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(incomeHandler.Add, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(incomeHandler.Add, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Создание новой записи о доходе"),
 			endpoint.Body(income.IncomeCreationRequest{}, "Структура запроса на создание записи о доходе", true),
@@ -383,7 +383,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodPut, "/incomes/{id}",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(incomeHandler.Update, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(incomeHandler.Update, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Редактирование существующей записи о доходе"),
 			endpoint.Path("id", "integer", "ID of income to edit", true),
@@ -397,7 +397,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodDelete, "/incomes/{id}",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(incomeHandler.Delete, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(incomeHandler.Delete, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Удаление записи о доходе"),
 			endpoint.Path("id", "integer", "ID of income to delete", true),
@@ -410,7 +410,7 @@ func (app App) initRouter() App {
 		endpoint.New(
 			http.MethodPost, "/balance",
 			endpoint.Handler(
-				mid.AccessLog(mid.Auth(calcHandler.TotalBalance, app.Logger), app.Logger),
+				mid.AccessLog(mid.Auth(calcHandler.TotalBalance, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Подсчёт баланса. Метод реализован как POST для того, чтобы у запроса могло быть тело."),
 			endpoint.Body(scope.Scope{}, "Для какой области видимости вычислить баланс", true),
@@ -419,6 +419,7 @@ func (app App) initRouter() App {
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		// СТАТИСТИКА
+
 	)
 
 	swag.New()

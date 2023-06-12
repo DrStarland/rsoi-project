@@ -204,6 +204,9 @@ func (s noteService) DeleteFromRequest(ctx context.Context, r *http.Request, id 
 
 	note := obj.Note{}
 	if err = myjson.From(body, &note); err != nil {
+		if res.StatusCode == 204 {
+			return obj.Note{}, errors.New("not exist")
+		}
 		return obj.Note{}, errors.Wrap(err, "failed to decode response")
 	}
 

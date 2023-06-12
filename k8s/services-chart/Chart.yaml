@@ -17,4 +17,8 @@ dependencies:
 
   - name: service-chart
     version: 1.0.0
-    alias: testus-gateway 
+    alias: testus-costs
+
+  - name: service-chart
+    version: 1.0.0
+    alias: testus-gateway

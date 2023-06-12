@@ -104,12 +104,11 @@ func (h NoteMainHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	note, err := h.Service.DeleteFromRequest(r.Context(), r, id)
 
 	if err != nil {
-		switch err.Error() {
-		case "not exist":
-			myjson.JSONResponce(w, http.StatusNoContent, errors.Wrap(err, ""))
+		if err.Error() == "not exist" {
+			myjson.JSONResponce(w, http.StatusNoContent, err.Error())
 			return
-		default:
-			myjson.JSONResponce(w, http.StatusInternalServerError, errors.Wrap(err, ""))
+		} else {
+			myjson.JSONResponce(w, http.StatusInternalServerError, err.Error())
 		}
 		return
 	}
