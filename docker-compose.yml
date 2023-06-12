@@ -81,12 +81,13 @@ services:
   #     context: src/statistics
   #     dockerfile: Dockerfile
   #   image: drstarland/testus-statistics:1.0
+  #   container_name: testus-statistics
   #   environment:
   #     PORT: "8030"
   #   ports:
   #     - "8030:8030"
   #   depends_on:
-  #     - kafka
+  #     - kafka-service
   #     - postgres
   #   links: 
   #     - postgres

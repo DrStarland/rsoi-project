@@ -1,5 +1,10 @@
+CREATE DATABASE staistics;
+GRANT ALL PRIVILEGES ON DATABASE statistics TO program;
+
 CREATE DATABASE notes;
 GRANT ALL PRIVILEGES ON DATABASE notes TO program;
+
+\connect notes;
 
 CREATE TABLE scope (
     ID SERIAL PRIMARY KEY,
@@ -29,3 +34,5 @@ CREATE TABLE tag_note_connection (
     tag_ID INT REFERENCES tag(ID),
     note_ID INT REFERENCES note(ID)
 );
+
+

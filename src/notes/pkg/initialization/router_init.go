@@ -158,7 +158,7 @@ func (app App) initRouter() App {
 			endpoint.Path("id", "integer", "ID of note to edit", true),
 			endpoint.Body(note.NoteCreationRequest{},
 				"Структура запроса на изменение заметки", true),
-			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(note.Note{})),
+			endpoint.Response(http.StatusCreated, "was successful", endpoint.SchemaResponseOption(note.Note{})),
 			endpoint.Response(http.StatusBadRequest, ""),
 			endpoint.Tags("Notes"),
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),

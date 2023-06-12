@@ -197,7 +197,7 @@ func (app App) initRouter() App {
 			endpoint.Path("id", "integer", "ID of note to edit", true),
 			endpoint.Body(note.NoteCreationRequest{},
 				"Структура запроса на изменение заметки", true),
-			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(note.Note{})),
+			endpoint.Response(http.StatusCreated, "was successful", endpoint.SchemaResponseOption(note.Note{})),
 			endpoint.Response(http.StatusBadRequest, ""),
 			endpoint.Tags("Notes"),
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
@@ -257,7 +257,7 @@ func (app App) initRouter() App {
 			endpoint.Path("id", "integer", "ID of task to edit", true),
 			endpoint.Body(task.TaskCreationRequest{},
 				"Структура запроса на изменение задачи", true),
-			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(task.Task{})),
+			endpoint.Response(http.StatusCreated, "was successful", endpoint.SchemaResponseOption(task.Task{})),
 			endpoint.Response(http.StatusBadRequest, ""),
 			endpoint.Tags("Tasks"),
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
@@ -283,9 +283,9 @@ func (app App) initRouter() App {
 			endpoint.Path("id", "integer", "ID задачи для добавления комментария", true),
 			endpoint.Body(task.CommentCreationRequest{},
 				"Структура запроса на создание комментария", true),
-			endpoint.Response(http.StatusOK, "Успешное выполнение", endpoint.SchemaResponseOption(task.Task{})),
+			endpoint.Response(http.StatusCreated, "Успешное выполнение", endpoint.SchemaResponseOption(task.Task{})),
 			endpoint.Response(http.StatusBadRequest, ""),
-			endpoint.Tags("Comments"),
+			endpoint.Tags("Tasks"),
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		// ЗАПИСИ ДОХОДОВ И РАСХОДОВ
@@ -300,7 +300,7 @@ func (app App) initRouter() App {
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		endpoint.New(
-			http.MethodGet, "/gateway/{id}",
+			http.MethodGet, "/costs/{id}",
 			endpoint.Handler(
 				mid.AccessLog(mid.Auth(costHandler.Show, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
@@ -322,7 +322,7 @@ func (app App) initRouter() App {
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		endpoint.New(
-			http.MethodPut, "/gateway/{id}",
+			http.MethodPut, "/costs/{id}",
 			endpoint.Handler(
 				mid.AccessLog(mid.Auth(costHandler.Update, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
@@ -330,13 +330,13 @@ func (app App) initRouter() App {
 			endpoint.Path("id", "integer", "ID of cost to edit", true),
 			endpoint.Body(cost.CostCreationRequest{},
 				"Структура запроса на изменение записи о расходе", true),
-			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(cost.Cost{})),
+			endpoint.Response(http.StatusCreated, "was successful", endpoint.SchemaResponseOption(cost.Cost{})),
 			endpoint.Response(http.StatusBadRequest, ""),
 			endpoint.Tags("Costs"),
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		endpoint.New(
-			http.MethodDelete, "/gateway/{id}",
+			http.MethodDelete, "/costs/{id}",
 			endpoint.Handler(
 				mid.AccessLog(mid.Auth(costHandler.Delete, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
@@ -389,7 +389,7 @@ func (app App) initRouter() App {
 			endpoint.Path("id", "integer", "ID of income to edit", true),
 			endpoint.Body(income.IncomeCreationRequest{},
 				"Структура запроса на изменение записи о доходе", true),
-			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(income.Income{})),
+			endpoint.Response(http.StatusCreated, "was successful", endpoint.SchemaResponseOption(income.Income{})),
 			endpoint.Response(http.StatusBadRequest, ""),
 			endpoint.Tags("Incomes"),
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),

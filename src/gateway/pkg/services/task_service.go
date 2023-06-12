@@ -244,7 +244,7 @@ func (s taskService) AddComment(ctx context.Context, id int, req obj.CommentCrea
 }
 
 func (s taskService) AddCommentFromRequest(ctx context.Context, r *http.Request, id int) (obj.Task, error) {
-	requestURL := fmt.Sprintf("%s/api/v1/tasks/%d", utils.Config.TasksEndpoint, id)
+	requestURL := fmt.Sprintf("%s/api/v1/tasks/%d/comments", utils.Config.TasksEndpoint, id)
 
 	URL, _ := url.Parse(requestURL)
 	r.URL.Scheme = URL.Scheme
