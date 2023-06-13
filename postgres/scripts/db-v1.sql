@@ -1,5 +1,8 @@
-CREATE DATABASE staistics;
+CREATE DATABASE statistics;
 GRANT ALL PRIVILEGES ON DATABASE statistics TO program;
+
+\connect statistics;
+GRANT USAGE, CREATE ON SCHEMA public TO program;
 
 CREATE DATABASE notes;
 GRANT ALL PRIVILEGES ON DATABASE notes TO program;

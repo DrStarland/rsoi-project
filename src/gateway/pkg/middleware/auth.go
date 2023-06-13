@@ -17,6 +17,7 @@ func Auth(next http.HandlerFunc, logger *zap.SugaredLogger) http.HandlerFunc {
 		if token, err := services.RetrieveToken(w, r, logger); err == nil {
 			r.Header.Set("X-User-Name", token.Subject)
 			r.Header.Set("X-UID", token.UID)
+			r.Header.Set("X-User-Role", "admin")
 			next(w, r)
 		}
 	}

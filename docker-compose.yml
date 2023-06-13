@@ -1,6 +1,7 @@
 version: "3"
 volumes:
   db-data:
+  
 networks:
   default:
     driver: bridge
@@ -76,22 +77,22 @@ services:
     # depends_on:
     #   - users-service
 
-  # statistics-service:
-  #   build:
-  #     context: src/statistics
-  #     dockerfile: Dockerfile
-  #   image: drstarland/testus-statistics:1.0
-  #   container_name: testus-statistics
-  #   environment:
-  #     PORT: "8030"
-  #   ports:
-  #     - "8030:8030"
-  #   depends_on:
-  #     - kafka-service
-  #     - postgres
-  #   links: 
-  #     - postgres
-  #   restart: always
+  statistics-service:
+    build:
+      context: src/statistics
+      dockerfile: Dockerfile
+    image: drstarland/testus-statistics:1.0
+    container_name: testus-statistics
+    environment:
+      PORT: "8030"
+    ports:
+      - "8030:8030"
+    depends_on:
+      - kafka-service
+      - postgres
+    links: 
+      - postgres
+    restart: always
 
   zookeeper-service:
     image: confluentinc/cp-zookeeper:7.3.2

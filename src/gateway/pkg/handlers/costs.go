@@ -117,16 +117,16 @@ func (h CostMainHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	cost, err := h.Service.DeleteFromRequest(r.Context(), r, id)
 
-	if err != nil {
-		switch err.Error() {
-		case "not exist":
-			myjson.JSONResponce(w, http.StatusNoContent, errors.Wrap(err, ""))
-			return
-		default:
-			myjson.JSONResponce(w, http.StatusInternalServerError, errors.Wrap(err, ""))
-		}
-		return
-	}
+	// if err != nil {
+	// 	switch err.Error() {
+	// 	case "not exist":
+	// 		myjson.JSONResponce(w, http.StatusNoContent, errors.Wrap(err, ""))
+	// 		return
+	// 	default:
+	// 		myjson.JSONResponce(w, http.StatusInternalServerError, errors.Wrap(err, ""))
+	// 	}
+	// 	return
+	// }
 
 	myjson.JSONResponce(w, http.StatusNoContent, cost)
 }

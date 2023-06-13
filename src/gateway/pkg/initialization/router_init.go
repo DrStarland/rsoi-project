@@ -9,12 +9,9 @@ import (
 	"gateway/pkg/models/income"
 	"gateway/pkg/models/note"
 	"gateway/pkg/models/scope"
+	"gateway/pkg/models/statistic"
 	"gateway/pkg/models/task"
 	"gateway/pkg/myjson"
-
-	// "users/pkg/models/authorization"
-
-	// "gateway/pkg/models/authorization"
 
 	"gateway/pkg/utils"
 	"log"
@@ -27,6 +24,7 @@ import (
 	"github.com/zc2638/swag"
 	"github.com/zc2638/swag/endpoint"
 	"github.com/zc2638/swag/option"
+	"github.com/zc2638/swag/types"
 	"go.uber.org/zap"
 )
 
@@ -97,6 +95,7 @@ func (app App) initRouter() App {
 	incomeHandler := handlers.NewIncomeHandler(app.Logger)
 	costHandler := handlers.NewCostHandler(app.Logger)
 	calcHandler := handlers.NewCalcHandler(app.Logger)
+	statHandler := handlers.NewStatisticsHandler(app.Logger)
 
 	kafka := InitKafka(app.Logger)
 
@@ -120,6 +119,7 @@ func (app App) initRouter() App {
 	api.AddTag("Costs", "")
 	api.AddTag("Incomes", "")
 	api.AddTag("Balance", "")
+	api.AddTag("Statistic", "")
 
 	api.AddEndpoint(
 		// СЕРВИС
@@ -221,7 +221,7 @@ func (app App) initRouter() App {
 				mid.AccessLog(mid.Auth(taskHandler.List, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
 			),
 			endpoint.Summary("Возвращает список заметок"),
-			endpoint.Response(http.StatusOK, ""),
+			endpoint.Response(http.StatusOK, "", endpoint.SchemaResponseOption([]task.Task{})),
 			endpoint.Tags("Tasks"),
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
@@ -415,11 +415,21 @@ func (app App) initRouter() App {
 			endpoint.Summary("Подсчёт баланса. Метод реализован как POST для того, чтобы у запроса могло быть тело."),
 			endpoint.Body(scope.Scope{}, "Для какой области видимости вычислить баланс", true),
 			endpoint.Response(http.StatusOK, "Balance result", endpoint.SchemaResponseOption(myjson.ResponceForm{})),
-			endpoint.Tags("Balance"),
+			endpoint.Tags("Balance", "Costs"),
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		// СТАТИСТИКА
-
+		endpoint.New(
+			http.MethodGet, "/requests",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(statHandler.List, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Query("begin_time", types.String, "format: 2006-01-02T15:04:05Z07:00", true),
+			endpoint.Query("end_time", types.String, "format: 2006-01-02T15:04:05Z07:00", true),
+			endpoint.Response(http.StatusOK, "Balance result", endpoint.SchemaResponseOption([]statistic.FetchResponse{})),
+			endpoint.Tags("Statistic"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
 	)
 
 	swag.New()
