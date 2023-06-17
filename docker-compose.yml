@@ -77,6 +77,20 @@ services:
     # depends_on:
     #   - users-service
 
+  frontend-service:
+    build:
+      context: src/frontend
+      dockerfile: Dockerfile
+    image: drstarland/testus-frontend:1.0
+    container_name: testus-frontend
+    environment:
+      PORT: "3000"
+    ports:
+      - "86:3000"
+    depends_on:
+      - gateway-service
+    restart: always
+
   statistics-service:
     build:
       context: src/statistics

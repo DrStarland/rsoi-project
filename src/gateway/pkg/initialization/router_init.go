@@ -443,6 +443,8 @@ func (app App) initRouter() App {
 	router.Handler(http.MethodGet, "/swagger/json", api.Handler())
 	router.Handler(http.MethodGet, "/swagger/ui/*any", swag.UIHandler("/swagger/ui", "/swagger/json", true))
 
+	router.HandleOPTIONS = false
+
 	app.Router = router
 	utils.InitConfig()
 
