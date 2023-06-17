@@ -25,12 +25,14 @@ const axiosBackend = () => {
 
 export default axiosBackend();
 
-export type AllNotesResp = {
-    // page: number,
-    // pageSize: number, 
-    // totalElements: number,
-    items: Note[]
-}
+// export type AllNotesResp = {
+//     // page: number,
+//     // pageSize: number, 
+//     // totalElements: number,
+//     items: Note[]
+// }
+
+export type AllNotesResp = Note[]
 
 export type AllCategoriesResp = {
     status: number,
