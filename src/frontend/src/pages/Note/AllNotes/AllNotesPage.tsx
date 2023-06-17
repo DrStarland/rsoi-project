@@ -11,16 +11,17 @@ interface AllNotesProps {}
 
 const AllNotesPage: React.FC<AllNotesProps> = (props) => {
   const searchContext = useContext(SearchContext);
+
   return (
     <>
     {/* Здесь сверху нужна кнопка добавления заметки, такая, как в NoteInfoPage.tsx из папки pages/Note/NoteInfo
     <RoundButton className={styles.basics_button} type="submit" onClick={event => this.submit(event)}>
       Создать заметку
     </RoundButton> */}
-    
+
     <Box className={styles.main_box}>
-      {console.log(GetNotes())}
-    <NoteMap getCall={GetNotes} />
+      {console.log("..", GetNotes())}
+    <NoteMap searchQuery={searchContext.query} getCall={GetNotes} />
     </Box>
     </>
   );

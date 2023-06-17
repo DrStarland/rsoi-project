@@ -1,26 +1,28 @@
 import { Box } from "@chakra-ui/react";
 import React from "react";
 import NoteCard from "../NoteCard";
-import { AllFilghtsResp } from "postAPI"
+import { AllNotesResp } from "postAPI"
 
 import styles from "./NoteMap.module.scss";
 
 interface NoteBoxProps {
     searchQuery?: string
-    getCall: (page: number, size: number) => Promise<AllFilghtsResp>
+    getCall: () => AllNotesResp
 }
 
-type State = AllFilghtsResp
+type State = AllNotesResp
 
 class NoteMap extends React.Component<NoteBoxProps, State> {
     constructor(props) {
         super(props);
     }
 
-    async getAll() {
-        var data = await this.props.getCall(0, 20)
+    getAll = () => {
+        console.log("state", this.state.items)
+        var data = this.props.getCall()
         if (data)
             this.setState(data)
+        console.log("state", this.state.items)
     }
 
     componentDidMount() {

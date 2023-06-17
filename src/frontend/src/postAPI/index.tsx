@@ -25,10 +25,10 @@ const axiosBackend = () => {
 
 export default axiosBackend();
 
-export type AllFilghtsResp = {
-    page: number,
-    pageSize: number, 
-    totalElements: number,
+export type AllNotesResp = {
+    // page: number,
+    // pageSize: number, 
+    // totalElements: number,
     items: Note[]
 }
 
