@@ -21,6 +21,16 @@ type NotesHandler interface {
 	Delete(w http.ResponseWriter, r *http.Request)
 }
 
+// Service encapsulates usecase logic for albums.
+type NoteService interface {
+	Get(ctx context.Context, id int) (note.Note, error)
+	Query(ctx context.Context, offset, limit int) ([]note.Note, error)
+	Count(ctx context.Context) (int, error)
+	Create(ctx context.Context, input *note.NoteCreationRequest) (note.Note, error)
+	Update(ctx context.Context, id int, input *note.NoteCreationRequest) (note.Note, error)
+	Delete(ctx context.Context, id int) (note.Note, error)
+}
+
 type NoteMainHandler struct {
 	Logger  *zap.SugaredLogger
 	Repo    note.Repository
@@ -151,20 +161,24 @@ func (h NoteMainHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	note, err := h.Service.Delete(r.Context(), id)
+	_, err = h.Service.Delete(r.Context(), id)
 
 	if err != nil {
-		switch err.Error() {
-		case "not exist":
-			myjson.JSONResponce(w, http.StatusNoContent, errors.Wrap(err, ""))
+		if err.Error() == "not exist" {
+			myjson.JSONResponce(w, http.StatusNoContent, map[string]interface{}{
+				"message": "already deleted",
+			})
 			return
-		default:
-			myjson.JSONResponce(w, http.StatusInternalServerError, errors.Wrap(err, ""))
+		} else {
+			myjson.JSONResponce(w, http.StatusInternalServerError, map[string]interface{}{
+				"message": err.Error(),
+			})
+			return
 		}
-		return
 	}
 
-	myjson.JSONResponce(w, http.StatusNoContent, note)
+	w.WriteHeader(http.StatusNoContent)
+	//myjson.JSONResponce(w, http.StatusOK, note)
 }
 
 // func (h NoteMainHandler) Create(w http.ResponseWriter, r *http.Request) error {

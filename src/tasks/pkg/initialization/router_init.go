@@ -149,6 +149,7 @@ func (app App) initRouter() App {
 			endpoint.Summary("Возвращает список заметок"),
 			endpoint.Response(http.StatusOK, ""),
 			endpoint.Tags("Tasks"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
 		),
 		endpoint.New(
 			http.MethodGet, "/tasks/{id}",
@@ -181,7 +182,7 @@ func (app App) initRouter() App {
 			endpoint.Path("id", "integer", "ID of task to edit", true),
 			endpoint.Body(task.TaskCreationRequest{},
 				"Структура запроса на изменение задачи", true),
-			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(task.Task{})),
+			endpoint.Response(http.StatusCreated, "was successful", endpoint.SchemaResponseOption(task.Task{})),
 			endpoint.Response(http.StatusBadRequest, ""),
 			endpoint.Tags("Tasks"),
 			endpoint.Security("Sophisticated_Service_auth", "read:pets"),

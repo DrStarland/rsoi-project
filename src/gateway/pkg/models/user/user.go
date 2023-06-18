@@ -1,19 +1,25 @@
 package user
 
 import (
-	"database/sql"
-	"gateway/pkg/models/privilege"
-	"gateway/pkg/models/tickets"
+	"errors"
 )
-
-type UserInfo struct {
-	Privilege   *privilege.PrivilegeShortInfo `json:"privilege"`
-	TicketsInfo *[]tickets.TicketInfo         `json:"tickets"`
-}
 
 type User struct {
 	ID       string `json:"id"`
 	Username string `json:"username"`
-	password string
-	updated  sql.NullString
 }
+
+// func (us *User) SetUpdated(val uint32) {
+// 	us.updated = sql.NullString{String: strconv.Itoa(int(val))}
+// }
+
+//go:generate mockgen -source=user.go -destination=repo_mock.go -package=user UserRepo
+type UserRepo interface {
+	Register(login, pass string) (*User, error)
+	Authorize(login, pass string) (*User, error)
+}
+
+var (
+	ErrNoUser  = errors.New("no user found")
+	ErrBadPass = errors.New("invald password")
+)

@@ -5,10 +5,13 @@ import (
 	"gateway/pkg/handlers"
 	mid "gateway/pkg/middleware"
 	"gateway/pkg/models/authorization"
-
-	// "users/pkg/models/authorization"
-
-	// "gateway/pkg/models/authorization"
+	"gateway/pkg/models/cost"
+	"gateway/pkg/models/income"
+	"gateway/pkg/models/note"
+	"gateway/pkg/models/scope"
+	"gateway/pkg/models/statistic"
+	"gateway/pkg/models/task"
+	"gateway/pkg/myjson"
 
 	"gateway/pkg/utils"
 	"log"
@@ -21,6 +24,7 @@ import (
 	"github.com/zc2638/swag"
 	"github.com/zc2638/swag/endpoint"
 	"github.com/zc2638/swag/option"
+	"github.com/zc2638/swag/types"
 	"go.uber.org/zap"
 )
 
@@ -77,17 +81,6 @@ func PlugToDo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app App) initRouter() App {
-
-	// repoTicket := ticket.NewPostgresRepo(db)
-	// tak := dbcontext.New(app.DB)
-	// repoNotes := note.NewRepository(tak, app.Logger)
-
-	// noteHandler := &handlers.NoteMainHandler{
-	// 	Logger:  app.Logger,
-	// 	Repo:    repoNotes,
-	// 	Service: handlers.NewNoteService(repoNotes, *app.Logger),
-	// }
-
 	router := httprouter.New()
 	router.PanicHandler = func(w http.ResponseWriter, r *http.Request, err interface{}) {
 		log.Println("panicMiddleware is working", r.URL.Path)
@@ -96,83 +89,55 @@ func (app App) initRouter() App {
 		}
 	}
 
-	// client := &http.Client{}
-
-	// auth_var := models.NewAuthM(client)
-	// ctrl := &auth.AuthCtrl{Auth: auth_var}
-
 	authHandler := handlers.NewAuthHandler(app.Logger)
+	taskHandler := handlers.NewTaskHandler(app.Logger)
+	noteHandler := handlers.NewNoteHandler(app.Logger)
+	incomeHandler := handlers.NewIncomeHandler(app.Logger)
+	costHandler := handlers.NewCostHandler(app.Logger)
+	calcHandler := handlers.NewCalcHandler(app.Logger)
+	statHandler := handlers.NewStatisticsHandler(app.Logger)
 
-	// 	ctrl := &AuthCtrl{auth}
-	// 	r.HandleFunc("/register", ctrl.Register).Methods("POST")
-	// 	r.HandleFunc("/authorize", ctrl.Authorize).Methods("POST")
-
-	// router.GET("/manage/health", ri\outer\HealthOK)
-
-	// type Category struct {
-	// 	ID     int64  `json:"category"`
-	// 	Name   string `json:"name" enum:"dog,cat" required:""`
-	// 	Exists *bool  `json:"exists" required:""`
-	// }
-
-	// // Pet example from the swagger pet store
-	// type Pet struct {
-	// 	ID        int64     `json:"id"`
-	// 	Category  *Category `json:"category" desc:"分类"`
-	// 	Name      string    `json:"name" required:"" example:"张三" desc:"名称"`
-	// 	PhotoUrls []string  `json:"photoUrls"`
-	// 	Tags      []string  `json:"tags" desc:"标签"`
-	// }
-
-	// handle := func(w http.ResponseWriter, r *http.Request) {
-	// 	_, _ = io.WriteString(w, fmt.Sprintf("[%s] Hello World!", r.Method))
-	// }
+	kafka := InitKafka(app.Logger)
 
 	api := swag.New(
-		option.Title("User Service API Doc"),
-		option.Security("user_auth", "read:pets"),
-		option.SecurityScheme("user_auth",
-			option.OAuth2Security("accessCode", "http://example.com/oauth/authorize", "http://example.com/oauth/token"),
+		option.Title("Costs-n-tasks API Doc"),
+		option.Security("Sophisticated_Service_auth", "user", "admin"),
+
+		option.SecurityScheme("Sophisticated_Service_auth",
+			// option.OAuth2Security("accessCode", "http://example.com/oauth/authorize", "http://example.com/oauth/token"),
+			option.APIKeySecurity("Authorization", "header"),
 			option.OAuth2Scope("admin", ""),
 			option.OAuth2Scope("user", ""),
 		),
 		option.BasePath("/api/v1"),
 	)
 
-	api.AddTag("Authorization", "")
 	api.AddTag("Healthcheck and statistics", "")
 	api.AddTag("Authorization", "")
-
-	// sm := session.NewSessionsManager()
-
-	// gs := &handlers.GatewayHandler{
-	// 	TicketServiceAddress: "http://testum-tickets:8070",
-	// 	FlightServiceAddress: "http://testum-flights:8060",
-	// 	BonusServiceAddress:  "http://testum-bonus:8050",
-	// 	Logger:               app.Logger,
-	// }
-
-	// router.GET("/api/v1/flights", mid.AccessLog(mid.Auth(gs.GetAllFlights, sm, logger), logger))
-	// router.GET("/api/v1/me", mid.AccessLog(mid.Auth(gs.GetUserInfo, sm, logger), logger))
-	// router.GET("/api/v1/tickets", mid.AccessLog(mid.Auth(gs.GetUserTickets, sm, logger), logger))
-	// router.GET("/api/v1/tickets/:ticketUID", mid.AccessLog(mid.Auth(gs.GetUserTicket, sm, logger), logger))
-	// router.POST("/api/v1/tickets", mid.AccessLog(mid.Auth(gs.BuyTicket, sm, logger), logger))
-	// router.DELETE("/api/v1/tickets/:ticketUID", mid.AccessLog(mid.Auth(gs.CancelTicket, sm, logger), logger))
-	// router.GET("/api/v1/privilege", mid.AccessLog(mid.Auth(gs.GetPrivilege, sm, logger), logger))
+	api.AddTag("Tasks", "")
+	api.AddTag("Notes", "")
+	api.AddTag("Costs", "")
+	api.AddTag("Incomes", "")
+	api.AddTag("Balance", "")
+	api.AddTag("Statistic", "")
 
 	api.AddEndpoint(
-
+		// СЕРВИС
 		endpoint.New(
 			http.MethodGet, "/manage/health",
-			endpoint.Handler(mid.AccessLog(HealthOK, app.Logger)),
+			endpoint.Handler(
+				mid.AccessLog(HealthOK, app.Logger, kafka.Topic, kafka.Producer),
+			),
 			endpoint.Summary(""),
 			endpoint.Response(http.StatusOK, "Server available"),
 			endpoint.Tags("Healthcheck and statistics"),
 		),
-
+		// АВТОРИЗАЦИЯ
 		endpoint.New(
 			http.MethodPost, "/authorize",
-			endpoint.Handler(authHandler.Authorize),
+			endpoint.Handler(
+				mid.AccessLog(authHandler.Authorize, app.Logger, kafka.Topic, kafka.Producer),
+			),
 			endpoint.Summary("Авторизация пользователя"),
 			endpoint.Body(authorization.AuthRequest{}, "Структура запроса на создание пользователя", true),
 
@@ -181,53 +146,290 @@ func (app App) initRouter() App {
 		),
 		endpoint.New(
 			http.MethodPost, "/register",
-			endpoint.Handler(authHandler.Register),
-			//endpoint.HeaderResponseOption()
+			endpoint.Handler(
+				mid.AccessLog(authHandler.Register, app.Logger, kafka.Topic, kafka.Producer),
+			),
 			endpoint.Summary("Регистрация пользователя"),
 			endpoint.Body(authorization.UserCreateRequest{}, "Структура запроса на создание пользователя", true),
 
 			endpoint.Response(http.StatusOK, "Registration was successful"),
 			endpoint.Tags("Authorization"),
 		),
+		// ЗАПИСКИ
+		endpoint.New(
+			http.MethodGet, "/notes",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(noteHandler.List, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Возвращает список заметок"),
+			endpoint.Response(http.StatusOK, ""),
+			endpoint.Tags("Notes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodGet, "/notes/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(noteHandler.Show, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Получение заметки по ID"),
+			endpoint.Tags("Notes"),
+			endpoint.Path("id", "integer", "ID of note to return", true),
+			endpoint.Response(http.StatusOK, "successful operation", endpoint.SchemaResponseOption(note.Note{})),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodPost, "/notes",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(noteHandler.Add, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Создание новой заметки"),
+			endpoint.Body(note.NoteCreationRequest{}, "Структура запроса на создание заметки", true),
+			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(note.Note{})),
+			endpoint.Tags("Notes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodPut, "/notes/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(noteHandler.Update, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Редактирование существующей заметки"),
+			endpoint.Path("id", "integer", "ID of note to edit", true),
+			endpoint.Body(note.NoteCreationRequest{},
+				"Структура запроса на изменение заметки", true),
+			endpoint.Response(http.StatusCreated, "was successful", endpoint.SchemaResponseOption(note.Note{})),
+			endpoint.Response(http.StatusBadRequest, ""),
+			endpoint.Tags("Notes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodDelete, "/notes/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(noteHandler.Delete, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Удаление заметки"),
+			endpoint.Path("id", "integer", "ID of note to delete", true),
+			endpoint.Response(http.StatusNoContent, "successful"),
+			endpoint.Response(http.StatusNoContent, "Entity is not exist or already deleted", endpoint.SchemaResponseOption("not exist")),
+			endpoint.Tags("Notes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		// ЗАДАЧИ
+		endpoint.New(
+			http.MethodGet, "/tasks",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(taskHandler.List, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Возвращает список заметок"),
+			endpoint.Response(http.StatusOK, "", endpoint.SchemaResponseOption([]task.Task{})),
+			endpoint.Tags("Tasks"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodGet, "/tasks/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(taskHandler.Show, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Получение задачи по ID"),
+			endpoint.Tags("Tasks"),
+			endpoint.Path("id", "integer", "ID of task to return", true),
+			endpoint.Response(http.StatusOK, "successful operation", endpoint.SchemaResponseOption(task.Task{})),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodPost, "/tasks",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(taskHandler.Add, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Создание новой задачи"),
+			endpoint.Body(task.TaskCreationRequest{}, "Структура запроса на создание задачи", true),
+			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(task.Task{})),
+			endpoint.Tags("Tasks"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodPut, "/tasks/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(taskHandler.Update, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Редактирование существующей задачи"),
+			endpoint.Path("id", "integer", "ID of task to edit", true),
+			endpoint.Body(task.TaskCreationRequest{},
+				"Структура запроса на изменение задачи", true),
+			endpoint.Response(http.StatusCreated, "was successful", endpoint.SchemaResponseOption(task.Task{})),
+			endpoint.Response(http.StatusBadRequest, ""),
+			endpoint.Tags("Tasks"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodDelete, "/tasks/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(taskHandler.Delete, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Удаление задачи"),
+			endpoint.Path("id", "integer", "ID of task to delete", true),
+			endpoint.Response(http.StatusNoContent, "successful"),
+			endpoint.Response(http.StatusNoContent, "Entity is not exist or already deleted", endpoint.SchemaResponseOption("not exist")),
+			endpoint.Tags("Tasks"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodPost, "/tasks/{id}/comments",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(taskHandler.AddComment, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Добавление комментария к существующей задаче"),
+			endpoint.Path("id", "integer", "ID задачи для добавления комментария", true),
+			endpoint.Body(task.CommentCreationRequest{},
+				"Структура запроса на создание комментария", true),
+			endpoint.Response(http.StatusCreated, "Успешное выполнение", endpoint.SchemaResponseOption(task.Task{})),
+			endpoint.Response(http.StatusBadRequest, ""),
+			endpoint.Tags("Tasks"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		// ЗАПИСИ ДОХОДОВ И РАСХОДОВ
+		endpoint.New(
+			http.MethodGet, "/costs",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(costHandler.List, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Возвращает список расходов"),
+			endpoint.Response(http.StatusOK, ""),
+			endpoint.Tags("Costs"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodGet, "/costs/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(costHandler.Show, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Получение записи о расходе по ID"),
+			endpoint.Tags("Costs"),
+			endpoint.Path("id", "integer", "ID of cost to return", true),
+			endpoint.Response(http.StatusOK, "successful operation", endpoint.SchemaResponseOption(cost.Cost{})),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodPost, "/costs",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(costHandler.Add, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Создание новой записи о расходе"),
+			endpoint.Body(cost.CostCreationRequest{}, "Структура запроса на создание записи о расходе", true),
+			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(cost.Cost{})),
+			endpoint.Tags("Costs"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodPut, "/costs/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(costHandler.Update, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Редактирование существующей записи о расходе"),
+			endpoint.Path("id", "integer", "ID of cost to edit", true),
+			endpoint.Body(cost.CostCreationRequest{},
+				"Структура запроса на изменение записи о расходе", true),
+			endpoint.Response(http.StatusCreated, "was successful", endpoint.SchemaResponseOption(cost.Cost{})),
+			endpoint.Response(http.StatusBadRequest, ""),
+			endpoint.Tags("Costs"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodDelete, "/costs/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(costHandler.Delete, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Удаление записи о расходе"),
+			endpoint.Path("id", "integer", "ID of cost to delete", true),
+			endpoint.Response(http.StatusNoContent, "successful"),
+			endpoint.Response(http.StatusNoContent, "Entity is not exist or already deleted", endpoint.SchemaResponseOption("not exist")),
+			endpoint.Tags("Costs"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		/////
+		endpoint.New(
+			http.MethodGet, "/incomes",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(incomeHandler.List, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Возвращает список доходов"),
+			endpoint.Response(http.StatusOK, ""),
+			endpoint.Tags("Incomes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodGet, "/incomes/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(incomeHandler.Show, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Получение записи о доходе по ID"),
+			endpoint.Tags("Incomes"),
+			endpoint.Path("id", "integer", "ID of income to return", true),
+			endpoint.Response(http.StatusOK, "successful operation", endpoint.SchemaResponseOption(income.Income{})),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodPost, "/incomes",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(incomeHandler.Add, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Создание новой записи о доходе"),
+			endpoint.Body(income.IncomeCreationRequest{}, "Структура запроса на создание записи о доходе", true),
+			endpoint.Response(http.StatusOK, "was successful", endpoint.SchemaResponseOption(income.Income{})),
+			endpoint.Tags("Incomes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodPut, "/incomes/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(incomeHandler.Update, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Редактирование существующей записи о доходе"),
+			endpoint.Path("id", "integer", "ID of income to edit", true),
+			endpoint.Body(income.IncomeCreationRequest{},
+				"Структура запроса на изменение записи о доходе", true),
+			endpoint.Response(http.StatusCreated, "was successful", endpoint.SchemaResponseOption(income.Income{})),
+			endpoint.Response(http.StatusBadRequest, ""),
+			endpoint.Tags("Incomes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		endpoint.New(
+			http.MethodDelete, "/incomes/{id}",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(incomeHandler.Delete, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Удаление записи о доходе"),
+			endpoint.Path("id", "integer", "ID of income to delete", true),
+			endpoint.Response(http.StatusNoContent, "successful"),
+			endpoint.Response(http.StatusNoContent, "Entity is not exist or already deleted", endpoint.SchemaResponseOption("not exist")),
+			endpoint.Tags("Incomes"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
 
-		// endpoint.New(
-		// 	http.MethodPost, "/register",
-		// 	endpoint.Handler(authHandler.Register),
-		// 	//endpoint.HeaderResponseOption()
-		// 	endpoint.Summary("Регистрация пользователя"),
-		// 	endpoint.Body(authorization.UserCreateRequest{}, "Структура запроса на создание пользователя", true),
-
-		// 	endpoint.Response(http.StatusOK, "Registration was successful"),
-		// 	endpoint.Tags("Authorization"),
-		// ),
-	// endpoint.New(
-	// 	http.MethodPost, "/pet",
-	// 	endpoint.Handler(handle),
-	// 	endpoint.Summary("Add a new pet to the store"),
-	// 	endpoint.Description("Additional information on adding a pet to the store"),
-	// 	endpoint.Body(Pet{}, "Pet object that needs to be added to the store", true),
-	// 	endpoint.Response(http.StatusOK, "Successfully added pet", endpoint.SchemaResponseOption(Pet{})), //End Schema(P)),
-	// 	endpoint.Security("petstore_auth", "read:pets", "write:pets"),
-	// 	endpoint.Tags("section"),
-	// ),
-	// endpoint.New(
-	// 	http.MethodGet, "/pet/{petId}",
-	// 	endpoint.Handler(handle),
-	// 	endpoint.Summary("Find pet by ID"),
-	// 	endpoint.Path("petId", "integer", "ID of pet to return", true),
-	// 	endpoint.Response(http.StatusOK, "successful operation", endpoint.SchemaResponseOption(Pet{})),
-	// 	endpoint.Security("petstore_auth", "read:pets"),
-	// ),
-	// endpoint.New(
-	// 	http.MethodPut, "/pet/{petId}",
-	// 	endpoint.Handler(handle),
-	// 	endpoint.Path("petId", "integer", "ID of pet to return", true),
-	// 	endpoint.Security("petstore_auth", "read:pets"),
-	// 	endpoint.ResponseSuccess(endpoint.SchemaResponseOption(struct {
-	// 		ID   string `json:"id"`
-	// 		Name string `json:"name"`
-	// 	}{})),
-	// ),
+		endpoint.New(
+			http.MethodPost, "/balance",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(calcHandler.TotalBalance, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Summary("Подсчёт баланса. Метод реализован как POST для того, чтобы у запроса могло быть тело."),
+			endpoint.Body(scope.Scope{}, "Для какой области видимости вычислить баланс", true),
+			endpoint.Response(http.StatusOK, "Balance result", endpoint.SchemaResponseOption(myjson.ResponceForm{})),
+			endpoint.Tags("Balance", "Costs"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
+		// СТАТИСТИКА
+		endpoint.New(
+			http.MethodGet, "/requests",
+			endpoint.Handler(
+				mid.AccessLog(mid.Auth(statHandler.List, app.Logger), app.Logger, kafka.Topic, kafka.Producer),
+			),
+			endpoint.Query("begin_time", types.String, "format: 2006-01-02T15:04:05Z07:00", true),
+			endpoint.Query("end_time", types.String, "format: 2006-01-02T15:04:05Z07:00", true),
+			endpoint.Response(http.StatusOK, "Balance result", endpoint.SchemaResponseOption([]statistic.FetchResponse{})),
+			endpoint.Tags("Statistic"),
+			endpoint.Security("Sophisticated_Service_auth", "read:pets"),
+		),
 	)
 
 	swag.New()
@@ -240,6 +442,8 @@ func (app App) initRouter() App {
 
 	router.Handler(http.MethodGet, "/swagger/json", api.Handler())
 	router.Handler(http.MethodGet, "/swagger/ui/*any", swag.UIHandler("/swagger/ui", "/swagger/json", true))
+
+	router.HandleOPTIONS = false
 
 	app.Router = router
 	utils.InitConfig()

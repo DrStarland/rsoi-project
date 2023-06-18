@@ -6,6 +6,11 @@ import (
 	"net/http"
 )
 
+type ResponceForm struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+}
+
 func To(input any) ([]byte, error) {
 	return json.Marshal(input)
 }
@@ -15,10 +20,7 @@ func From(source []byte, dest any) error {
 }
 
 func JSONError(w http.ResponseWriter, status int, msg string) {
-	resp, err := To(map[string]interface{}{
-		"status":  status,
-		"message": msg,
-	})
+	resp, err := To(ResponceForm{Status: status, Message: msg})
 	if err != nil {
 		log.Println(err.Error())
 	}
