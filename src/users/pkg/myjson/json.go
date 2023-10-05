@@ -15,6 +15,8 @@ func From(source []byte, dest any) error {
 }
 
 func JSONError(w http.ResponseWriter, status int, msg string) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
 	resp, err := To(map[string]interface{}{
 		"status":  status,
 		"message": msg,
@@ -30,6 +32,8 @@ func JSONError(w http.ResponseWriter, status int, msg string) {
 }
 
 func JSONResponce(w http.ResponseWriter, status int, msg any) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
 	respJSON, err := To(msg)
 	if err != nil {
 		log.Println(err.Error())

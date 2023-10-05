@@ -5,7 +5,7 @@ import (
 	"gateway/pkg/models/airport"
 	"gateway/pkg/models/flights"
 	"gateway/pkg/myjson"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -25,7 +25,7 @@ func GetFlight(flightServiceAddress, flightNumber string) (*flights.Flight, erro
 		return nil, fmt.Errorf("Failed request to flight service: %w", err)
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -53,7 +53,7 @@ func GetAllFlightsInfo(flightServiceAddress string) (*[]flights.FlightInfo, erro
 		return nil, fmt.Errorf("Failed request to flight service: %w", err)
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -106,7 +106,7 @@ func GetAirport(flightServiceAddress string, airportID int) (*airport.Airport, e
 		return nil, fmt.Errorf("failed request to flight service: %w", err)
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(err.Error())
 	}

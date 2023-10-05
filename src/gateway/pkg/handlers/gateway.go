@@ -6,6 +6,7 @@ import (
 	"gateway/pkg/models/tickets"
 	"gateway/pkg/myjson"
 	"gateway/pkg/services"
+	"gateway/pkg/utils"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -18,10 +19,15 @@ import (
 )
 
 type GatewayHandler struct {
+	Config utils.Configuration
+
 	TicketServiceAddress string
 	FlightServiceAddress string
 	BonusServiceAddress  string
-	Logger               *zap.SugaredLogger
+
+	UserService   string
+	Authorization services.AuthController
+	Logger        *zap.SugaredLogger
 }
 
 func (h *GatewayHandler) checkUserHeader(r *http.Request) (string, bool) {
@@ -42,7 +48,7 @@ func (h *GatewayHandler) GetAllFlights(w http.ResponseWriter, r *http.Request, p
 	flightsSlice, err := services.GetAllFlightsInfo(h.FlightServiceAddress)
 	if err != nil {
 		h.Logger.Errorln("failed to get response from flight service: " + err.Error())
-		myjson.JsonError(w, http.StatusInternalServerError, err.Error())
+		myjson.JSONError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -86,7 +92,7 @@ func (h *GatewayHandler) GetAllFlights(w http.ResponseWriter, r *http.Request, p
 		Items:         &flightsStripped,
 	}
 
-	myjson.JsonResponce(w, http.StatusOK, result)
+	myjson.JSONResponce(w, http.StatusOK, result)
 }
 
 func (h *GatewayHandler) GetUserTickets(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -108,7 +114,7 @@ func (h *GatewayHandler) GetUserTickets(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	myjson.JsonResponce(w, http.StatusOK, ticketsInfo)
+	myjson.JSONResponce(w, http.StatusOK, ticketsInfo)
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -147,7 +153,7 @@ func (h *GatewayHandler) CancelTicket(w http.ResponseWriter, r *http.Request, ps
 	// h.Logger.Infoln("Where is nil 5? ", ticketInfo)
 	// h.Logger.Info(ticketUID, ticketInfo)
 	if ticketInfo == nil {
-		myjson.JsonError(w, http.StatusNotFound, "ticket not found")
+		myjson.JSONError(w, http.StatusNotFound, "ticket not found")
 		return
 	}
 
@@ -270,11 +276,11 @@ func (h *GatewayHandler) GetUserTicket(w http.ResponseWriter, r *http.Request, p
 	// h.Logger.Infoln("Where is nil 5? ", ticketInfo)
 	// h.Logger.Info(ticketUID, ticketInfo)
 	if ticketInfo == nil {
-		myjson.JsonError(w, http.StatusNotFound, "ticket not found")
+		myjson.JSONError(w, http.StatusNotFound, "ticket not found")
 		return
 	}
 	// h.Logger.Infoln("Where is nil 6? ", ticketInfo)
-	myjson.JsonResponce(w, http.StatusOK, ticketInfo)
+	myjson.JSONResponce(w, http.StatusOK, ticketInfo)
 }
 
 func (h *GatewayHandler) BuyTicket(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -295,7 +301,7 @@ func (h *GatewayHandler) BuyTicket(w http.ResponseWriter, r *http.Request, ps ht
 	err = myjson.From(body, &ticketInfo)
 	if err != nil {
 		h.Logger.Errorln("failed to decode post request: " + err.Error())
-		myjson.JsonError(w, http.StatusBadRequest, "failed to decode post request: "+err.Error())
+		myjson.JSONError(w, http.StatusBadRequest, "failed to decode post request: "+err.Error())
 		return
 	}
 	// h.Logger.Infoln("CRINGE3 ", ticketInfo)
@@ -309,11 +315,11 @@ func (h *GatewayHandler) BuyTicket(w http.ResponseWriter, r *http.Request, ps ht
 	// h.Logger.Infoln("CRINGE4 ", *tickets)
 	if err != nil {
 		h.Logger.Errorln("failed to get response: " + err.Error())
-		myjson.JsonError(w, http.StatusServiceUnavailable, "Bonus Service unavailable")
+		myjson.JSONError(w, http.StatusServiceUnavailable, "Bonus Service unavailable")
 		return
 	}
 	// h.Logger.Debugln("CRINGE4 ", *tickets)
-	myjson.JsonResponce(w, http.StatusOK, tickets)
+	myjson.JSONResponce(w, http.StatusOK, tickets)
 }
 
 func (h *GatewayHandler) GetUserInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -333,22 +339,22 @@ func (h *GatewayHandler) GetUserInfo(w http.ResponseWriter, r *http.Request, ps 
 	if err != nil {
 		if err != http.ErrServerClosed {
 			h.Logger.Errorln("failed to get response: " + err.Error())
-			myjson.JsonError(w, http.StatusInternalServerError, "failed to get response: "+err.Error())
+			myjson.JSONError(w, http.StatusInternalServerError, "failed to get response: "+err.Error())
 			return
 		}
 
 		pseudoUserInfo := struct {
-			Privilege   string                `json:"privilege"`
-			TicketsInfo *[]tickets.TicketInfo `json:"tickets"`
+			Privilege   string                `JSON:"privilege"`
+			TicketsInfo *[]tickets.TicketInfo `JSON:"tickets"`
 		}{
 			TicketsInfo: userInfo.TicketsInfo,
 		}
 
-		myjson.JsonResponce(w, http.StatusOK, pseudoUserInfo)
+		myjson.JSONResponce(w, http.StatusOK, pseudoUserInfo)
 		return
 	}
 
-	myjson.JsonResponce(w, http.StatusOK, userInfo)
+	myjson.JSONResponce(w, http.StatusOK, userInfo)
 }
 
 func (h *GatewayHandler) GetPrivilege(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -365,9 +371,9 @@ func (h *GatewayHandler) GetPrivilege(w http.ResponseWriter, r *http.Request, ps
 
 	if err != nil {
 		h.Logger.Errorln("failed to get response: " + err.Error())
-		myjson.JsonError(w, http.StatusServiceUnavailable, "Bonus Service unavailable")
+		myjson.JSONError(w, http.StatusServiceUnavailable, "Bonus Service unavailable")
 		return
 	}
 
-	myjson.JsonResponce(w, http.StatusOK, privilegeInfo)
+	myjson.JSONResponce(w, http.StatusOK, privilegeInfo)
 }

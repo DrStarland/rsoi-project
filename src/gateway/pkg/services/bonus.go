@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"gateway/pkg/models/privilege"
 	"gateway/pkg/myjson"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -25,7 +25,7 @@ func GetPrivilegeShortInfo(bonusServiceAddress, username string) (*privilege.Pri
 		return nil, fmt.Errorf("failed request to privilege service: %s", err)
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -56,7 +56,7 @@ func GetPrivilegeHistory(bonusServiceAddress string, privilegeID int) (*[]privil
 		return nil, fmt.Errorf("failed request to privilege service: %s", err)
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(err.Error())
 	}

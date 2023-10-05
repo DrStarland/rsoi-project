@@ -15,7 +15,7 @@ type SqlRepository struct {
 }
 
 // NewRepository creates a new album repository
-func NewRepository(db *dbcontext.DB, logger *zap.SugaredLogger) SqlRepository {
+func NewSQLRepository(db *dbcontext.DB, logger *zap.SugaredLogger) SqlRepository {
 	return SqlRepository{db, logger}
 }
 

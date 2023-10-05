@@ -1,28 +1,23 @@
 package services
 
-// import (
-// 	"context"
-// 	"users/internal/entity"
-// 	"users/pkg/log"
-// 	"time"
+import (
+	"context"
+	obj "users/pkg/models/note"
+	"users/pkg/models/timestamp"
 
-// 	validation "github.com/go-ozzo/ozzo-validation/v4"
-// )
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
+)
 
-// // Service encapsulates usecase logic for albums.
-// type Service interface {
-// 	Get(ctx context.Context, id string) (Album, error)
-// 	Query(ctx context.Context, offset, limit int) ([]Album, error)
-// 	Count(ctx context.Context) (int, error)
-// 	Create(ctx context.Context, input CreateAlbumRequest) (Album, error)
-// 	Update(ctx context.Context, id string, input UpdateAlbumRequest) (Album, error)
-// 	Delete(ctx context.Context, id string) (Album, error)
-// }
-
-// // Album represents the data about an album.
-// type Album struct {
-// 	entity.Album
-// }
+// Service encapsulates usecase logic for albums.
+type NoteService interface {
+	Get(ctx context.Context, id int) (obj.Note, error)
+	Query(ctx context.Context, offset, limit int) ([]obj.Note, error)
+	Count(ctx context.Context) (int, error)
+	Create(ctx context.Context, input *obj.Note) (obj.Note, error)
+	Update(ctx context.Context, id int, input *obj.Note) (obj.Note, error)
+	Delete(ctx context.Context, id int) (obj.Note, error)
+}
 
 // // CreateAlbumRequest represents an album creation request.
 // type CreateAlbumRequest struct {
@@ -48,89 +43,100 @@ package services
 // 	)
 // }
 
-// type service struct {
-// 	repo   Repository
-// 	logger log.Logger
-// }
+type noteService struct {
+	repo   obj.Repository
+	logger zap.SugaredLogger
+}
 
-// // NewService creates a new album service.
-// func NewService(repo Repository, logger log.Logger) Service {
-// 	return service{repo, logger}
-// }
+// NewService creates a new album service.
+func NewNoteService(repo obj.Repository, logger zap.SugaredLogger) noteService {
+	return noteService{repo, logger}
+}
 
-// // Get returns the album with the specified the album ID.
-// func (s service) Get(ctx context.Context, id string) (Album, error) {
-// 	album, err := s.repo.Get(ctx, id)
-// 	if err != nil {
-// 		return Album{}, err
-// 	}
-// 	return Album{album}, nil
-// }
+// Get returns the album with the specified the album ID.
+func (s noteService) Get(ctx context.Context, id int) (obj.Note, error) {
+	note, err := s.repo.Get(ctx, id)
+	if err != nil {
+		return obj.Note{}, errors.Wrap(err, "service work failed")
+	}
+	return note, nil
+}
 
-// // Create creates a new album.
-// func (s service) Create(ctx context.Context, req CreateAlbumRequest) (Album, error) {
-// 	if err := req.Validate(); err != nil {
-// 		return Album{}, err
-// 	}
-// 	id := entity.GenerateID()
-// 	now := time.Now()
-// 	err := s.repo.Create(ctx, entity.Album{
-// 		ID:        id,
-// 		Name:      req.Name,
-// 		CreatedAt: now,
-// 		UpdatedAt: now,
-// 	})
-// 	if err != nil {
-// 		return Album{}, err
-// 	}
-// 	return s.Get(ctx, id)
-// }
+// ID              int       `json:"id"`
+// Author          user.User `json:"author"` // author
+// VisibilityScope scope.Scope
+// Tags            []tag.Tag
+// CreatedAt       timestamp.Timestamp // return time.Now().Format("2006-01-02T15:04:05.000")
+// UpdatedAt       timestamp.Timestamp
+// Title           string
+// Content         string
+// Create creates a new album.
+func (s noteService) Create(ctx context.Context, req *obj.Note) (obj.Note, error) {
+	// if err := req.Validate(); err != nil {
+	// 	return obj.Note{}, err
+	// }
 
-// // Update updates the album with the specified ID.
-// func (s service) Update(ctx context.Context, id string, req UpdateAlbumRequest) (Album, error) {
-// 	if err := req.Validate(); err != nil {
-// 		return Album{}, err
-// 	}
+	now := timestamp.Now()
 
-// 	album, err := s.Get(ctx, id)
-// 	if err != nil {
-// 		return album, err
-// 	}
-// 	album.Name = req.Name
-// 	album.UpdatedAt = time.Now()
+	insertion := obj.Note{
+		Author:          req.Author,
+		VisibilityScope: req.VisibilityScope,
+		Tags:            req.Tags,
+		CreatedAt:       timestamp.Timestamp(now),
+		UpdatedAt:       timestamp.Timestamp(now),
+		Title:           req.Title,
+		Content:         req.Content,
+	}
 
-// 	if err := s.repo.Update(ctx, album.Album); err != nil {
-// 		return album, err
-// 	}
-// 	return album, nil
-// }
+	err := s.repo.Create(ctx, &insertion)
+	if err != nil {
+		return obj.Note{}, errors.Wrap(err, "service work failed")
+	}
+	return s.Get(ctx, insertion.ID)
+}
 
-// // Delete deletes the album with the specified ID.
-// func (s service) Delete(ctx context.Context, id string) (Album, error) {
-// 	album, err := s.Get(ctx, id)
-// 	if err != nil {
-// 		return Album{}, err
-// 	}
-// 	if err = s.repo.Delete(ctx, id); err != nil {
-// 		return Album{}, err
-// 	}
-// 	return album, nil
-// }
+// Update updates the album with the specified ID.
+func (s noteService) Update(ctx context.Context, id int, req *obj.Note) (obj.Note, error) {
+	// if err := req.Validate(); err != nil {
+	// 	return obj.Note{}, err
+	// }
 
-// // Count returns the number of albums.
-// func (s service) Count(ctx context.Context) (int, error) {
-// 	return s.repo.Count(ctx)
-// }
+	album, _ := s.Get(ctx, id)
+	// if err != nil {
+	// 	return album, err
+	// }
+	// album.Name = req.Name
+	// album.UpdatedAt = time.Now()
 
-// // Query returns the albums with the specified offset and limit.
-// func (s service) Query(ctx context.Context, offset, limit int) ([]Album, error) {
-// 	items, err := s.repo.Query(ctx, offset, limit)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	result := []Album{}
-// 	for _, item := range items {
-// 		result = append(result, Album{item})
-// 	}
-// 	return result, nil
-// }
+	// if err := s.repo.Update(ctx, album.Album); err != nil {
+	// 	return album, err
+	// }
+	return album, nil
+}
+
+// Delete deletes the album with the specified ID.
+func (s noteService) Delete(ctx context.Context, id int) (obj.Note, error) {
+	album, err := s.Get(ctx, id)
+	if err != nil {
+		return obj.Note{}, err
+	}
+	if err = s.repo.Delete(ctx, id); err != nil {
+		return obj.Note{}, err
+	}
+	return album, nil
+}
+
+// Count returns the number of albums.
+func (s noteService) Count(ctx context.Context) (int, error) {
+	return s.repo.Count(ctx)
+}
+
+// Query returns the albums with the specified offset and limit.
+func (s noteService) Query(ctx context.Context, offset, limit int) ([]obj.Note, error) {
+	items, err := s.repo.Query(ctx, offset, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}

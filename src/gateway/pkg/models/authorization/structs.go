@@ -1,4 +1,4 @@
-package objects
+package authorization
 
 import (
 	_ "encoding/json"

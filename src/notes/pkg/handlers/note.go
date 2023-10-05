@@ -14,11 +14,11 @@ import (
 )
 
 type NotesHandler interface {
-	List(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
-	Show(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
-	Add(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
-	Update(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
-	Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
+	List(w http.ResponseWriter, r *http.Request)
+	Show(w http.ResponseWriter, r *http.Request)
+	Add(w http.ResponseWriter, r *http.Request)
+	Update(w http.ResponseWriter, r *http.Request)
+	Delete(w http.ResponseWriter, r *http.Request)
 }
 
 type NoteMainHandler struct {
@@ -42,17 +42,22 @@ type NoteMainHandler struct {
 // 	return c.Write(pages)
 // }
 
-func (h NoteMainHandler) List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h NoteMainHandler) List(w http.ResponseWriter, r *http.Request) {
 	// lol := ps.ByName("id")
+	h.Logger.Infoln("ЕЩЁ ЖИВ 1")
 	elems, err := h.Service.Query(r.Context(), 0, 64)
+	h.Logger.Infoln("ЕЩЁ ЖИВ 2")
 	if err != nil {
 		myjson.JSONError(w, http.StatusInternalServerError, "DB error: "+err.Error())
 		return
 	}
+	h.Logger.Infoln("ЕЩЁ ЖИВ 3")
 	myjson.JSONResponce(w, http.StatusOK, elems)
 }
 
-func (h NoteMainHandler) Show(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h NoteMainHandler) Show(w http.ResponseWriter, r *http.Request) {
+	ps := httprouter.ParamsFromContext(r.Context())
+
 	id, err := strconv.Atoi(ps.ByName("id"))
 	if err != nil {
 		myjson.JSONResponce(w, http.StatusBadRequest, errors.Wrap(err, "bad ID in URL"))
@@ -66,7 +71,7 @@ func (h NoteMainHandler) Show(w http.ResponseWriter, r *http.Request, ps httprou
 	myjson.JSONResponce(w, http.StatusOK, note)
 }
 
-func (h *NoteMainHandler) Add(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *NoteMainHandler) Add(w http.ResponseWriter, r *http.Request) {
 	note := &note.Note{}
 
 	body, err := io.ReadAll(r.Body)
@@ -89,7 +94,7 @@ func (h *NoteMainHandler) Add(w http.ResponseWriter, r *http.Request, ps httprou
 	myjson.JSONResponce(w, http.StatusCreated, note)
 }
 
-// func (h NoteMainHandler) Create(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+// func (h NoteMainHandler) Create(w http.ResponseWriter, r *http.Request) error {
 // 	var input CreateAlbumRequest
 // 	if err := c.Read(&input); err != nil {
 // 		r.logger.With(c.Request.Context()).Info(err)
@@ -172,7 +177,7 @@ func (h *NoteMainHandler) Add(w http.ResponseWriter, r *http.Request, ps httprou
 // 	Logger      *zap.SugaredLogger
 // }
 
-// func (h *PostsHandler) Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// func (h *PostsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // 	id := ps.ByName("id")
 // 	currentSess, ok := r.Context().Value(session.SessionKey).(*session.Session)
 // 	if !ok {
@@ -200,7 +205,7 @@ func (h *NoteMainHandler) Add(w http.ResponseWriter, r *http.Request, ps httprou
 // 	myjson.JSONError(w, http.StatusOK, "success")
 // }
 
-// func (h *PostsHandler) GetOne(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// func (h *PostsHandler) GetOne(w http.ResponseWriter, r *http.Request) {
 // 	id := ps.ByName("id")
 // 	item, err := h.PostsRepo.GetByID(id)
 
@@ -216,7 +221,7 @@ func (h *NoteMainHandler) Add(w http.ResponseWriter, r *http.Request, ps httprou
 // 	myjson.JSONResponce(w, http.StatusOK, item)
 // }
 
-// func (h *PostsHandler) GetOneAndUpvote(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// func (h *PostsHandler) GetOneAndUpvote(w http.ResponseWriter, r *http.Request) {
 // 	id := ps.ByName("id")
 // 	currentSess, ok := r.Context().Value(session.SessionKey).(*session.Session)
 // 	if !ok {
@@ -236,7 +241,7 @@ func (h *NoteMainHandler) Add(w http.ResponseWriter, r *http.Request, ps httprou
 // 	myjson.JSONResponce(w, http.StatusOK, item)
 // }
 
-// func (h *PostsHandler) GetOneAndUndoVote(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// func (h *PostsHandler) GetOneAndUndoVote(w http.ResponseWriter, r *http.Request) {
 // 	id := ps.ByName("id")
 // 	currentSess, ok := r.Context().Value(session.SessionKey).(*session.Session)
 // 	if !ok {
@@ -256,7 +261,7 @@ func (h *NoteMainHandler) Add(w http.ResponseWriter, r *http.Request, ps httprou
 // 	myjson.JSONResponce(w, http.StatusOK, item)
 // }
 
-// func (h *PostsHandler) GetOneAndDownvote(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// func (h *PostsHandler) GetOneAndDownvote(w http.ResponseWriter, r *http.Request) {
 // 	id := ps.ByName("id")
 // 	currentSess, ok := r.Context().Value(session.SessionKey).(*session.Session)
 // 	if !ok {
@@ -276,7 +281,7 @@ func (h *NoteMainHandler) Add(w http.ResponseWriter, r *http.Request, ps httprou
 // 	myjson.JSONResponce(w, http.StatusOK, item)
 // }
 
-// func (h *PostsHandler) GetAllByCategory(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// func (h *PostsHandler) GetAllByCategory(w http.ResponseWriter, r *http.Request) {
 // 	category := ps.ByName("category")
 // 	elems, err := h.PostsRepo.GetAllByCategory(category)
 
@@ -288,7 +293,7 @@ func (h *NoteMainHandler) Add(w http.ResponseWriter, r *http.Request, ps httprou
 // 	myjson.JSONResponce(w, http.StatusOK, elems)
 // }
 
-// func (h *PostsHandler) GetAllByUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// func (h *PostsHandler) GetAllByUser(w http.ResponseWriter, r *http.Request) {
 // 	username := ps.ByName("username")
 // 	elems, err := h.PostsRepo.GetAllByUser(username)
 
@@ -300,7 +305,7 @@ func (h *NoteMainHandler) Add(w http.ResponseWriter, r *http.Request, ps httprou
 // 	myjson.JSONResponce(w, http.StatusOK, elems)
 // }
 
-// func (h *PostsHandler) AddComment(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// func (h *PostsHandler) AddComment(w http.ResponseWriter, r *http.Request) {
 // 	if r.Header.Get("Content-Type") != Applijson {
 // 		myjson.JSONError(w, http.StatusBadRequest, "unknown payload")
 // 		return
@@ -360,7 +365,7 @@ func (h *NoteMainHandler) Add(w http.ResponseWriter, r *http.Request, ps httprou
 // 	myjson.JSONResponce(w, http.StatusCreated, post)
 // }
 
-// func (h *PostsHandler) DeleteComment(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// func (h *PostsHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 // 	id := ps.ByName("id")
 // 	currentSess, ok := r.Context().Value(session.SessionKey).(*session.Session)
 // 	if !ok {
@@ -401,7 +406,7 @@ func (h *NoteMainHandler) Add(w http.ResponseWriter, r *http.Request, ps httprou
 // 	myjson.JSONResponce(w, http.StatusOK, post)
 // }
 
-// func (h *TicketsHandler) GetTicketsByUsername(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// func (h *TicketsHandler) GetTicketsByUsername(w http.ResponseWriter, r *http.Request) {
 // 	username := ps.ByName("username")
 // 	tickets, err := h.TicketsRepo.GetByUsername(username)
 // 	if err != nil {
@@ -414,7 +419,7 @@ func (h *NoteMainHandler) Add(w http.ResponseWriter, r *http.Request, ps httprou
 // 	myjson.JSONResponce(w, http.StatusOK, tickets)
 // }
 
-// func (h *TicketsHandler) BuyTicket(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// func (h *TicketsHandler) BuyTicket(w http.ResponseWriter, r *http.Request) {
 // 	if r.Header.Get("Content-Type") != "application/json" {
 // 		myjson.JSONError(w, http.StatusBadRequest, "unknown payload")
 // 		return
@@ -442,7 +447,7 @@ func (h *NoteMainHandler) Add(w http.ResponseWriter, r *http.Request, ps httprou
 // 	w.WriteHeader(http.StatusOK)
 // }
 
-// func (h *TicketsHandler) DeleteTicket(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// func (h *TicketsHandler) DeleteTicket(w http.ResponseWriter, r *http.Request) {
 // 	ticketUID := ps.ByName("ticketUID")
 
 // 	if err := h.TicketsRepo.Delete(ticketUID); err != nil {

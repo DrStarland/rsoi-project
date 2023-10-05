@@ -1,13 +1,14 @@
 package initialization
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strings"
-	"users/pkg/auth"
-	mid "users/pkg/middleware"
-	"users/pkg/models"
+	"users/pkg/handlers"
+	"users/pkg/models/authorization"
+	"users/pkg/utils"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	"github.com/julienschmidt/httprouter"
@@ -18,6 +19,7 @@ import (
 )
 
 type App struct {
+	Config        utils.Configuration
 	Router        *httprouter.Router
 	DB            *dbx.DB
 	Logger        *zap.SugaredLogger
@@ -25,13 +27,14 @@ type App struct {
 }
 
 func NewApp(logger *zap.SugaredLogger) App {
-	return App{Logger: logger}.initDB().initRouter().initAddress()
+	utils.InitConfig()
+	return App{Config: utils.Config, Logger: logger}.initDB().initRouter().initAddress()
 }
 
-func GetServerAddress() string {
+func (app App) GetServerAddress() string {
 	ServerAddress := os.Getenv("PORT")
 	if ServerAddress == "" || ServerAddress == ":80" {
-		ServerAddress = ":8080"
+		ServerAddress = fmt.Sprintf(":%d", app.Config.Port)
 	} else if !strings.HasPrefix(ServerAddress, ":") {
 		ServerAddress = ":" + ServerAddress
 	}
@@ -39,8 +42,7 @@ func GetServerAddress() string {
 }
 
 func (app App) initAddress() App {
-	ServerAddress := GetServerAddress()
-	app.ServerAddress = ServerAddress
+	app.ServerAddress = app.GetServerAddress()
 	return app
 }
 
@@ -64,6 +66,10 @@ func (app App) initDB() App {
 	return app
 }
 
+func PlugToDo(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
 func (app App) initRouter() App {
 
 	// repoTicket := ticket.NewPostgresRepo(db)
@@ -84,30 +90,33 @@ func (app App) initRouter() App {
 		}
 	}
 
-	client := &http.Client{}
+	// client := &http.Client{}
 
-	auth_var := models.NewAuthM(client)
-	ctrl := &auth.AuthCtrl{Auth: auth_var}
+	// auth_var := models.NewAuthM(client)
+	// ctrl := &auth.AuthCtrl{Auth: auth_var}
 
-	router.POST("/api/v1/notes", mid.AccessLog(ctrl.Register, app.Logger))
-	router.POST("/api/v1/users/:id", mid.AccessLog(ctrl.Authorize, app.Logger))
+	authHandler := handlers.NewAuthHandler(app.Logger)
+
+	// 	ctrl := &AuthCtrl{auth}
+	// 	r.HandleFunc("/register", ctrl.Register).Methods("POST")
+	// 	r.HandleFunc("/authorize", ctrl.Authorize).Methods("POST")
 
 	// router.GET("/manage/health", ri\outer\HealthOK)
 
-	type Category struct {
-		ID     int64  `json:"category"`
-		Name   string `json:"name" enum:"dog,cat" required:""`
-		Exists *bool  `json:"exists" required:""`
-	}
+	// type Category struct {
+	// 	ID     int64  `json:"category"`
+	// 	Name   string `json:"name" enum:"dog,cat" required:""`
+	// 	Exists *bool  `json:"exists" required:""`
+	// }
 
-	// Pet example from the swagger pet store
-	type Pet struct {
-		ID        int64     `json:"id"`
-		Category  *Category `json:"category" desc:"分类"`
-		Name      string    `json:"name" required:"" example:"张三" desc:"名称"`
-		PhotoUrls []string  `json:"photoUrls"`
-		Tags      []string  `json:"tags" desc:"标签"`
-	}
+	// // Pet example from the swagger pet store
+	// type Pet struct {
+	// 	ID        int64     `json:"id"`
+	// 	Category  *Category `json:"category" desc:"分类"`
+	// 	Name      string    `json:"name" required:"" example:"张三" desc:"名称"`
+	// 	PhotoUrls []string  `json:"photoUrls"`
+	// 	Tags      []string  `json:"tags" desc:"标签"`
+	// }
 
 	// handle := func(w http.ResponseWriter, r *http.Request) {
 	// 	_, _ = io.WriteString(w, fmt.Sprintf("[%s] Hello World!", r.Method))
@@ -115,16 +124,18 @@ func (app App) initRouter() App {
 
 	api := swag.New(
 		option.Title("User Service API Doc"),
-		option.Security("petstore_auth", "read:pets"),
-		option.SecurityScheme("petstore_auth",
+		option.Security("user_auth", "read:pets"),
+		option.SecurityScheme("user_auth",
 			option.OAuth2Security("accessCode", "http://example.com/oauth/authorize", "http://example.com/oauth/token"),
-			option.OAuth2Scope("write:pets", "modify pets in your account"),
-			option.OAuth2Scope("read:pets", "read your pets"),
+			option.OAuth2Scope("admin", ""),
+			option.OAuth2Scope("user", ""),
 		),
+		option.BasePath("/api/v1"),
 	)
 
 	api.AddTag("Authorization", "")
 	api.AddTag("Healthcheck and statistics", "")
+	api.AddTag("Authorization", "")
 
 	api.AddEndpoint(
 		endpoint.New(
@@ -134,13 +145,37 @@ func (app App) initRouter() App {
 			endpoint.Response(http.StatusOK, "Server available"),
 			endpoint.Tags("Healthcheck and statistics"),
 		),
+
 		endpoint.New(
-			http.MethodGet, "/manage/health",
-			endpoint.Handler(HealthOK),
-			endpoint.Summary(""),
-			endpoint.Response(http.StatusOK, "Server available"),
-			endpoint.Tags("Healthcheck and statistics"),
+			http.MethodPost, "/authorize",
+			endpoint.Handler(authHandler.Authorize),
+			endpoint.Summary("Авторизация пользователя"),
+			endpoint.Body(authorization.AuthRequest{}, "Структура запроса на создание пользователя", true),
+
+			endpoint.Response(http.StatusOK, "Registration was successful"),
+			endpoint.Tags("Authorization"),
 		),
+		endpoint.New(
+			http.MethodPost, "/register",
+			endpoint.Handler(authHandler.Register),
+			//endpoint.HeaderResponseOption()
+			endpoint.Summary("Регистрация пользователя"),
+			endpoint.Body(authorization.UserCreateRequest{}, "Структура запроса на создание пользователя", true),
+
+			endpoint.Response(http.StatusOK, "Registration was successful"),
+			endpoint.Tags("Authorization"),
+		),
+
+		// endpoint.New(
+		// 	http.MethodPost, "/register",
+		// 	endpoint.Handler(authHandler.Register),
+		// 	//endpoint.HeaderResponseOption()
+		// 	endpoint.Summary("Регистрация пользователя"),
+		// 	endpoint.Body(authorization.UserCreateRequest{}, "Структура запроса на создание пользователя", true),
+
+		// 	endpoint.Response(http.StatusOK, "Registration was successful"),
+		// 	endpoint.Tags("Authorization"),
+		// ),
 	// endpoint.New(
 	// 	http.MethodPost, "/pet",
 	// 	endpoint.Handler(handle),
@@ -179,13 +214,12 @@ func (app App) initRouter() App {
 		router.Handler(e.Method, path, h)
 	})
 
-	app.Logger.Infoln(api.Info, api.BasePath, api.Tags)
-
 	router.Handler(http.MethodGet, "/swagger/json", api.Handler())
 	router.Handler(http.MethodGet, "/swagger/ui/*any", swag.UIHandler("/swagger/ui", "/swagger/json", true))
 
 	app.Router = router
 
+	utils.InitConfig()
 	return app
 }
 

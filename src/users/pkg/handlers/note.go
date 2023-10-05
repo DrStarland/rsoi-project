@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"users/pkg/models/note"
 	"users/pkg/myjson"
+	"users/pkg/services"
 
 	"github.com/julienschmidt/httprouter"
 	"go.uber.org/zap"
@@ -13,18 +14,18 @@ import (
 	"github.com/pkg/errors"
 )
 
-type NotesHandler interface {
-	List(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
-	Show(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
-	Add(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
-	Update(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
-	Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
-}
+// type NotesHandler interface {
+// 	List(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
+// 	Show(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
+// 	Add(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
+// 	Update(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
+// 	Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
+// }
 
 type NoteMainHandler struct {
 	Logger  *zap.SugaredLogger
 	Repo    note.Repository
-	Service NoteService
+	Service services.NoteService
 }
 
 // func (h NoteMainHandler) query(c *routing.Context) error {

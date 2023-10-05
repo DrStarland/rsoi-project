@@ -1,13 +1,11 @@
 package utils
 
-import "os"
-
 type oktaConfig struct {
 	Endpoint     string `json:"endpoint"`
 	ClientId     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
 	ClientGroup  string `json:"client_group"`
-	SSWSToken    string `json:"ssws_token"`
+	OktetoToken  string `json:"ssws_token"`
 }
 
 type Configuration struct {
@@ -26,13 +24,13 @@ func InitConfig() {
 	Config = Configuration{
 		"logs/server.log",
 		8040,
-		`{"keys":[{"kty":"RSA","alg":"RS256","kid":"XVh9VRM57Bic_gSk2s4owqSKYVQYhZrd7ONvInnszyQ","use":"sig","e":"AQAB","n":"r25i2X_caK8RpM5r4Gugi0N01TGL-rR_3f7vNgkXpL0RlvgJSTWjt8o_NqreLE2b9YLktYI8o7e1Asmz-U2wGA0cepppU5g-7J7B83KyWc8a71Wzj5fSBHr3_SQx2L_sPSQ2lp27fdVjIeL-c2htV69889MGz3ut3snJiGbMNdxfyEbcL8OzjUp1BYkM69A-NBc8xwCwZNWkll5sIHxIb7D5S4m_SnyZ3VTdTTvbhz-8ao3j8ofjWfuC5ys4sTLVXVrWUPKv6yrLBqcLeMezHDaUF-Ocx62dpJTC3-ZhtctmFWhHJdsK0U0VAkHaDX6qGsnpigL0ukskt04rhkr0lQ"}]}`,
+		`{"keys":[{"kid":"oD7q2D3-11tEFQgZXfoikjHVmjcUEPU-iNGirGadNUo","alg":"RS256","e":"AQAB","kty":"RSA","n":"ygo812YXS2SMuX9iJhKZzDFqK0tsyrxkXBbwa1IiMyRIeeznbUYNYnul5WAtf4Kbo-aJxZw10My6rpJk7-bFh-oSB64myR2Gb1rowmd4w621e1Zn4QwMmvhmMYq1LEeXKu4jh2vwZs1ylCoeHfqKgW2qUtDkeXQ2W9aLFByDv1uNDF9oY2PhwrwUdGHlCJt-e4SoPlHBPr0SibMUwr5CfodRfYNOKzPT0hqqRQT6F1FMQZuMOikZY8pw6Q-OriPfcXqeWx68VeU3bmSQ3EPMHd71UDOrzY1dafkKPoLc5qGel4ktuPrrKAn1uiaNeRjN82dLTO0QiAZ5Ly7rGGcM7Q"}]}`,
 		oktaConfig{
-			"https://dev-35033098.okta.com",
-			"0oa7udguoeLIsv0KJ5d7",
-			os.Getenv("OKTA_CLIENT_SECRET"),
-			"00g98aome3no6UejV5d7",
-			os.Getenv("OKTA_SSWS_TOKEN"),
+			Endpoint:     "https://dev-98541142.okta.com",
+			ClientId:     "0oa7v8rairOUbYAvy5d7",
+			ClientSecret: "iQcihL2DDY6AXyYG3_0XuPsFdWQ9w9vk98xFKBIR",
+			ClientGroup:  "",
+			OktetoToken:  "YR8wM1sKHc4JQb02kpmN102ZWQN4qVdbxE6J27d5pA2DZd0V", // os.Getenv("OKTETO_TOKEN"),
 		},
 	}
 }

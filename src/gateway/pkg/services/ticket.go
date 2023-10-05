@@ -6,7 +6,7 @@ import (
 	"gateway/pkg/models/privilege"
 	"gateway/pkg/models/tickets"
 	"gateway/pkg/myjson"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -98,7 +98,7 @@ func GetTicketsByUsername(ticketsServiceAddress, username string) (*[]tickets.Ti
 
 	tickets := &[]tickets.Ticket{}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(err.Error())
 	}

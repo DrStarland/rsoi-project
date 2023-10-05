@@ -36,21 +36,24 @@
 # FROM alpine AS run_stage
 # WORKDIR /app
 # COPY --from=build_stage /main /main
-# RUN ls
+# RUN ls19
 # # RUN chmod +x /bin/main
 
 # EXPOSE 8080
 
 # ENTRYPOINT ["/main"]
 
-FROM golang:1.19
+FROM golang:1.20
 WORKDIR /pain/
-COPY . .
+COPY ./go.mod .
+COPY ./vendor .
 RUN go mod tidy
-RUN CGO_ENABLED=0 go build -a -installsuffix cgo -o app ./cmd/gateway
+COPY . .
 
+RUN CGO_ENABLED=0 go build -a -installsuffix cgo -o app ./cmd/gateway
+# --no-cache 
 FROM alpine:latest  
-RUN apk --no-cache add ca-certificates
+RUN apk add --no-cache ca-certificates
 WORKDIR /root/
 COPY --from=0 /pain/app ./
 EXPOSE 8080

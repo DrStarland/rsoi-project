@@ -1,34 +1,22 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 
-	"gateway/pkg/myjson"
-	"gateway/pkg/session"
+	"gateway/pkg/services"
 
-	"github.com/julienschmidt/httprouter"
 	"go.uber.org/zap"
 )
 
-func Auth(next httprouter.Handle, sm session.SessionsManager, logger *zap.SugaredLogger) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		logger.Infoln("TOKETOKETOKE ", r.Header.Get("Authorization"))
-
-		sess, err := sm.Check(r)
-		if err != nil {
-			if err == session.ErrNoAuth {
-				myjson.JsonError(w, http.StatusUnauthorized, err.Error())
-				return
-			}
-			myjson.JsonError(w, http.StatusUnauthorized, err.Error())
-			return
-		} else if sess == nil {
-			myjson.JsonError(w, http.StatusUnauthorized, "")
-			return
+func Auth(next http.HandlerFunc, logger *zap.SugaredLogger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// ctx := session.ContextWithSession(r.Context(), sess)
+		ctx := context.TODO()
+		// next(w, r.WithContext(ctx))
+		if token, err := services.RetrieveToken(w, r); err == nil {
+			r.Header.Set("X-User-Name", token.Subject)
+			next(w, r.WithContext(ctx))
 		}
-
-		r.Header.Set("X-User-Name", sess.User.Username)
-		ctx := session.ContextWithSession(r.Context(), sess)
-		next(w, r.WithContext(ctx), ps)
 	}
 }
