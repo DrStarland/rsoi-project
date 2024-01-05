@@ -1,0 +1,2245 @@
+{
+	"info": {
+		"_postman_id": "a0134029-2e80-4db8-a4f5-4dea8b4f35ff",
+		"name": "[rsoi] Costs-n-tasks",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "18408965"
+	},
+	"item": [
+		{
+			"name": "Init",
+			"item": [
+				{
+					"name": "Check Health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status test\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/manage/health",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"manage",
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить токен\", () => {\r",
+									"    pm.response.to.have.status(200)\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.contains(\"application/json\");\r",
+									"\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.access_token).not.be.empty\r",
+									"    pm.environment.set(\"authorizationToken\", response.access_token)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"password\": \"{{password}}\",\r\n  \"username\": \"{{username}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "text"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/authorize",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"authorize"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Note",
+			"item": [
+				{
+					"name": "[NO AUTH] Get Notes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить заметки [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/notes",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Get Notes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить заметки / Get Notes\", function () {\r",
+									"    pm.response.to.have.status(200)\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/notes",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[NO AUTH] Create Note",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Создать заметку [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Content\": \"Хочу отдыхать...\",\r\n  \"Tags\": [\r\n    \"отдых\"\r\n  ],\r\n  \"Title\": \"ОТДЫХ!\",\r\n  \"VisibilityScope\": {\r\n    \"OwnerID\": \"{{ownerID}}\",\r\n    \"ScopeAffiliation\": 1\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/notes",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Create Note",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Создать заметку / Create Note\", () => {\r",
+									"    pm.response.to.have.status(201)\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.contains(\"application/json\")\r",
+									"\r",
+									"    const ownerID = pm.environment.get(\"ownerID\")\r",
+									"    const serviceURL = pm.environment.get(\"serviceURL\")\r",
+									"\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.be.not.undefined\r",
+									"    pm.expect(response.VisibilityScope.OwnerID).to.eq(ownerID)\r",
+									"    pm.expect(response.Title).to.eq(\"ОТДЫХ!\")\r",
+									"    pm.expect(response.Content).to.eq(\"Хочу отдыхать...\")\r",
+									"    pm.expect(response.CreatedAt).to.not.empty\r",
+									"    pm.expect(response.UpdatedAt).to.not.empty\r",
+									"\r",
+									"    pm.environment.set(\"noteURL\", serviceURL + \"/api/v1/notes/\" + response.id)\r",
+									"    pm.environment.set(\"noteID\", response.id)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Content\": \"Хочу отдыхать...\",\r\n  \"Tags\": [\r\n    \"отдых\"\r\n  ],\r\n  \"Title\": \"ОТДЫХ!\",\r\n  \"VisibilityScope\": {\r\n    \"OwnerID\": \"{{ownerID}}\",\r\n    \"ScopeAffiliation\": 1\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/notes",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[NO AUTH] Get Note",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить конкретную заметку [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/notes/{{noteID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notes",
+								"{{noteID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Get Note",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить созданную заметку / Get Note\", () => {\r",
+									"    pm.response.to.have.status(200)\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.contains(\"application/json\");\r",
+									"\r",
+									"    const noteID = pm.environment.get(\"noteID\")\r",
+									"    const ownerID = pm.environment.get(\"ownerID\")\r",
+									"    // console.log(ownerID)\r",
+									"    \r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.be.not.undefined\r",
+									"    pm.expect(response.id).to.be.eq(noteID)\r",
+									"    pm.expect(response.VisibilityScope.OwnerID).to.eq(ownerID)\r",
+									"    pm.expect(response.Title).to.eq(\"ОТДЫХ!\")\r",
+									"    pm.expect(response.Content).to.eq(\"Хочу отдыхать...\")\r",
+									"    pm.expect(response.Tags[0]).to.eq(\"отдых\")\r",
+									"    pm.expect(response.CreatedAt).to.not.empty\r",
+									"    pm.expect(response.UpdatedAt).to.not.empty\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/notes/{{noteID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notes",
+								"{{noteID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[NO AUTH] Edit Note",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Изменить заметку [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 20,\r\n    \"author\": {\r\n        \"id\": \"00u7v8uise3kPmayz5d7\",\r\n        \"username\": \"ojmutmhlacsxrhkgds@tmmcv.com\"\r\n    },\r\n    \"CreatedAt\": \"2023-06-09T12:55:29.362\",\r\n    \"UpdatedAt\": \"2023-06-09T12:55:29.362\",\r\n    \"Title\": \"ОТДЫХ!\",\r\n    \"Content\": \"Господи, отправь меня на отдых\",\r\n    \"Tags\": [\r\n        \"отдых\",\r\n        \"религия\"\r\n    ],\r\n    \"VisibilityScope\": {\r\n        \"ScopeAffiliation\": 1,\r\n        \"OwnerID\": \"00u7v8uise3kPmayz5d7\"\r\n    }\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/notes/{{noteID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notes",
+								"{{noteID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Edit Note",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Изменить заметку / Edit Note\", () => {\r",
+									"    pm.response.to.have.status(201)\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.contains(\"application/json\");\r",
+									"\r",
+									"    const noteID = pm.environment.get(\"noteID\")\r",
+									"    const ownerID = pm.environment.get(\"ownerID\")\r",
+									"    // console.log(ownerID)\r",
+									"    \r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.be.not.undefined\r",
+									"    pm.expect(response.id).to.be.eq(noteID)\r",
+									"    pm.expect(response.VisibilityScope.OwnerID).to.eq(ownerID)\r",
+									"    pm.expect(response.Title).to.eq(\"ОТДЫХ!\")\r",
+									"    pm.expect(response.Content).to.eq(\"Господи, отправь меня на отдых\")\r",
+									"    pm.expect(response.Tags[0]).to.eq(\"отдых\")\r",
+									"    pm.expect(response.Tags[1]).to.eq(\"религия\")\r",
+									"    pm.expect(response.CreatedAt).to.not.empty\r",
+									"    pm.expect(response.UpdatedAt).to.not.empty\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 20,\r\n    \"author\": {\r\n        \"id\": \"00u7v8uise3kPmayz5d7\",\r\n        \"username\": \"ojmutmhlacsxrhkgds@tmmcv.com\"\r\n    },\r\n    \"CreatedAt\": \"2023-06-09T12:55:29.362\",\r\n    \"UpdatedAt\": \"2023-06-09T12:55:29.362\",\r\n    \"Title\": \"ОТДЫХ!\",\r\n    \"Content\": \"Господи, отправь меня на отдых\",\r\n    \"Tags\": [\r\n        \"отдых\",\r\n        \"религия\"\r\n    ],\r\n    \"VisibilityScope\": {\r\n        \"ScopeAffiliation\": 1,\r\n        \"OwnerID\": \"00u7v8uise3kPmayz5d7\"\r\n    }\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/notes/{{noteID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notes",
+								"{{noteID}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Task",
+			"item": [
+				{
+					"name": "[NO AUTH] Get Tasks",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить задачи [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/tasks",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tasks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Get Tasks",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить задачи / Get Tasks\", function () {\r",
+									"    pm.response.to.have.status(200)\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/tasks",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tasks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[NO AUTH] Create Task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Создать задачу [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Description\": \"Заказать билет на отдых 01.01.2230 Сочи\",\r\n  \"NoteURL\": \"{{noteURL}}\",\r\n  \"Title\": \"Отдыху - быть\",\r\n  \"VisibilityScope\": {\r\n    \"OwnerID\": \"{{ownerID}}\",\r\n    \"ScopeAffiliation\": 1\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/tasks",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tasks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Create Task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Создать задачу / Create Task\", () => {\r",
+									"    pm.response.to.have.status(201)\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.contains(\"application/json\")\r",
+									"\r",
+									"    const ownerID = pm.environment.get(\"ownerID\")\r",
+									"    const noteURL = pm.environment.get(\"noteURL\")\r",
+									"\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.be.not.undefined\r",
+									"    pm.expect(response.VisibilityScope.OwnerID).to.eq(ownerID)\r",
+									"    pm.expect(response.NoteURL).to.eq(noteURL)\r",
+									"    pm.expect(response.Title).to.eq(\"Билет на отдых\")\r",
+									"    pm.expect(response.Description).to.eq(\"Заказать билет на отдых с 01.01.2230 Москва-Сочи\")\r",
+									"    pm.expect(response.CreatedAt).to.not.empty\r",
+									"    pm.expect(response.UpdatedAt).to.not.empty\r",
+									"\r",
+									"    pm.environment.set(\"taskID\", response.id)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Description\": \"Заказать билет на отдых с 01.01.2230 Москва-Сочи\",\r\n  \"NoteURL\": \"{{noteURL}}\",\r\n  \"Title\": \"Билет на отдых\",\r\n  \"VisibilityScope\": {\r\n    \"OwnerID\": \"{{ownerID}}\",\r\n    \"ScopeAffiliation\": 1\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/tasks",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tasks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[NO AUTH] Get Task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить конкретную задачу [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/tasks/{{taskID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tasks",
+								"{{taskID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Get Task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить созданную задачу / Get Task\", () => {\r",
+									"    pm.response.to.have.status(200)\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.contains(\"application/json\")\r",
+									"\r",
+									"    const ownerID = pm.environment.get(\"ownerID\")\r",
+									"    const noteURL = pm.environment.get(\"noteURL\")\r",
+									"    const taskID = pm.environment.get(\"taskID\")\r",
+									"\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.be.not.undefined\r",
+									"    pm.expect(response.VisibilityScope.OwnerID).to.eq(ownerID)\r",
+									"    pm.expect(response.NoteURL).to.eq(noteURL)\r",
+									"    pm.expect(response.id).to.eq(taskID)\r",
+									"    pm.expect(response.Title).to.eq(\"Билет на отдых\")\r",
+									"    pm.expect(response.Description).to.eq(\"Заказать билет на отдых с 01.01.2230 Москва-Сочи\")\r",
+									"    pm.expect(response.CreatedAt).to.not.empty\r",
+									"    pm.expect(response.UpdatedAt).to.not.empty\r",
+									"\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/tasks/{{taskID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tasks",
+								"{{taskID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[NO AUTH] Edit Task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Изменить задачу [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Description\": \"Заказать билет на отдых с 01.01.2030 Москва-Сочи\",\r\n  \"NoteURL\": \"{{noteURL}}\",\r\n  \"Title\": \"Билет на отдых\",\r\n  \"VisibilityScope\": {\r\n    \"OwnerID\": \"{{ownerID}}\",\r\n    \"ScopeAffiliation\": 1\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/tasks/{{taskID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tasks",
+								"{{taskID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Edit Task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Изменить задачу / Edit Task\", () => {\r",
+									"    pm.response.to.have.status(201)\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.contains(\"application/json\")\r",
+									"\r",
+									"    const ownerID = pm.environment.get(\"ownerID\")\r",
+									"    const noteURL = pm.environment.get(\"noteURL\")\r",
+									"    const taskID = pm.environment.get(\"taskID\")\r",
+									"\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.be.not.undefined\r",
+									"    pm.expect(response.VisibilityScope.OwnerID).to.eq(ownerID)\r",
+									"    pm.expect(response.NoteURL).to.eq(noteURL)\r",
+									"    pm.expect(response.id).to.eq(taskID)\r",
+									"    pm.expect(response.Title).to.eq(\"Билет на отдых\")\r",
+									"    pm.expect(response.Description).to.eq(\"Заказать билет на отдых с 01.01.2030 Москва-Сочи\")\r",
+									"    pm.expect(response.CreatedAt).to.not.empty\r",
+									"    pm.expect(response.UpdatedAt).to.not.empty\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Description\": \"Заказать билет на отдых с 01.01.2030 Москва-Сочи\",\r\n  \"NoteURL\": \"{{noteURL}}\",\r\n  \"Title\": \"Билет на отдых\",\r\n  \"VisibilityScope\": {\r\n    \"OwnerID\": \"{{ownerID}}\",\r\n    \"ScopeAffiliation\": 1\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/tasks/{{taskID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tasks",
+								"{{taskID}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Costs",
+			"item": [
+				{
+					"name": "[NO AUTH] Get Costs",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить расходы [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/costs",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"costs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Get Costs",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить расходы / Get Costs\", () => {\r",
+									"    pm.response.to.have.status(200)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/costs",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"costs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[NO AUTH] Create Cost",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Создать расход [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Amount\": 500,\r\n  \"Category\": \"Продукты и еда\",\r\n  \"Comment\": \"Бауманские булочки с сыром\",\r\n  \"VisibilityScope\": {\r\n    \"OwnerID\": \"{{ownerID}}\",\r\n    \"ScopeAffiliation\": 1\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/costs",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"costs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Create Cost",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Создать расход / Create Cost\", () => {\r",
+									"    pm.response.to.have.status(201)\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.contains(\"application/json\")\r",
+									"\r",
+									"    const ownerID = pm.environment.get(\"ownerID\")\r",
+									"\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.be.not.undefined\r",
+									"    pm.expect(response.VisibilityScope.OwnerID).to.eq(ownerID)\r",
+									"    pm.expect(response.Amount).to.eq(500)\r",
+									"    pm.expect(response.Category).to.eq(\"Еда\")\r",
+									"    pm.expect(response.Comment).to.eq(\"Бауманские булочки с сыром\")\r",
+									"    pm.expect(response.CreatedAt).to.not.empty\r",
+									"    pm.expect(response.UpdatedAt).to.not.empty\r",
+									"\r",
+									"    pm.environment.set(\"costID\", response.id)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Amount\": 500,\r\n  \"Category\": \"Еда\",\r\n  \"Comment\": \"Бауманские булочки с сыром\",\r\n  \"VisibilityScope\": {\r\n    \"OwnerID\": \"{{ownerID}}\",\r\n    \"ScopeAffiliation\": 1\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/costs",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"costs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[NO AUTH] Get Cost",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить расход [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/costs/{{costID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"costs",
+								"{{costID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Get Cost",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить расход / Get Cost\", () => {\r",
+									"    pm.response.to.have.status(200)\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.contains(\"application/json\")\r",
+									"\r",
+									"    const ownerID = pm.environment.get(\"ownerID\")\r",
+									"\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.be.not.undefined\r",
+									"    pm.expect(response.VisibilityScope.OwnerID).to.eq(ownerID)\r",
+									"    pm.expect(response.Amount).to.eq(500)\r",
+									"    pm.expect(response.Category).to.eq(\"Еда\")\r",
+									"    pm.expect(response.Comment).to.eq(\"Бауманские булочки с сыром\")\r",
+									"    pm.expect(response.CreatedAt).to.not.empty\r",
+									"    pm.expect(response.UpdatedAt).to.not.empty\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/costs/{{costID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"costs",
+								"{{costID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[NO AUTH] Edit Cost",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Изменить данные о расходе [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Amount\": 1900,\r\n  \"Category\": \"Еда\",\r\n  \"Comment\": \"Бауманские булочки с сыром\",\r\n  \"VisibilityScope\": {\r\n    \"OwnerID\": \"{{ownerID}}\",\r\n    \"ScopeAffiliation\": 1\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/costs/{{costID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"costs",
+								"{{costID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Edit Cost",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Изменить данные о расходе / Edit Cost\", () => {\r",
+									"    pm.response.to.have.status(201)\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.contains(\"application/json\")\r",
+									"\r",
+									"    const ownerID = pm.environment.get(\"ownerID\")\r",
+									"\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.be.not.undefined\r",
+									"    pm.expect(response.VisibilityScope.OwnerID).to.eq(ownerID)\r",
+									"    pm.expect(response.Amount).to.eq(2500)\r",
+									"    pm.expect(response.Category).to.eq(\"Еда\")\r",
+									"    pm.expect(response.Comment).to.eq(\"Бауманские булочки с сыром\")\r",
+									"    pm.expect(response.CreatedAt).to.not.empty\r",
+									"    pm.expect(response.UpdatedAt).to.not.empty\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Amount\": 2500,\r\n  \"Category\": \"Еда\",\r\n  \"Comment\": \"Бауманские булочки с сыром\",\r\n  \"VisibilityScope\": {\r\n    \"OwnerID\": \"{{ownerID}}\",\r\n    \"ScopeAffiliation\": 1\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/costs/{{costID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"costs",
+								"{{costID}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Incomes",
+			"item": [
+				{
+					"name": "[NO AUTH] Get Incomes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить доходы [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/incomes",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"incomes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Get Incomes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить доходы / Get Incomes\", () => {\r",
+									"    pm.response.to.have.status(200)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/incomes",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"incomes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[NO AUTH] Create Income",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Создать доход [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Amount\": 3000,\r\n  \"Category\": \"Стипендия\",\r\n  \"Comment\": \"Сентябрь\",\r\n  \"VisibilityScope\": {\r\n    \"OwnerID\": \"{{ownerID}}\",\r\n    \"ScopeAffiliation\": 1\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/incomes",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"incomes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Create Income",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Создать доход / Create Income\", () => {\r",
+									"    pm.response.to.have.status(201)\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.contains(\"application/json\")\r",
+									"\r",
+									"    const ownerID = pm.environment.get(\"ownerID\")\r",
+									"\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.be.not.undefined\r",
+									"    pm.expect(response.VisibilityScope.OwnerID).to.eq(ownerID)\r",
+									"    pm.expect(response.Amount).to.eq(3000)\r",
+									"    pm.expect(response.Category).to.eq(\"Стипендия\")\r",
+									"    pm.expect(response.Comment).to.eq(\"Сентябрь\")\r",
+									"    pm.expect(response.CreatedAt).to.not.empty\r",
+									"\r",
+									"    pm.environment.set(\"incomeID\", response.id)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Amount\": 3000,\r\n  \"Category\": \"Стипендия\",\r\n  \"Comment\": \"Сентябрь\",\r\n  \"VisibilityScope\": {\r\n    \"OwnerID\": \"{{ownerID}}\",\r\n    \"ScopeAffiliation\": 1\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/incomes",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"incomes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[NO AUTH] Get Income",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить доход [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/incomes/{{incomeID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"incomes",
+								"{{incomeID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Get Income",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить доход / Get Income\", () => {\r",
+									"    pm.response.to.have.status(200)\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.contains(\"application/json\")\r",
+									"\r",
+									"    const ownerID = pm.environment.get(\"ownerID\")\r",
+									"\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.be.not.undefined\r",
+									"    pm.expect(response.VisibilityScope.OwnerID).to.eq(ownerID)\r",
+									"    pm.expect(response.Amount).to.eq(3000)\r",
+									"    pm.expect(response.Category).to.eq(\"Стипендия\")\r",
+									"    pm.expect(response.Comment).to.eq(\"Сентябрь\")\r",
+									"    pm.expect(response.CreatedAt).to.not.empty\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/incomes/{{incomeID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"incomes",
+								"{{incomeID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[NO AUTH] Edit Income",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Изменить данные о доходе [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Amount\": 6000,\r\n  \"Category\": \"Стипендия\",\r\n  \"Comment\": \"Сентябрь и октябрь\",\r\n  \"VisibilityScope\": {\r\n    \"OwnerID\": \"{{ownerID}}\",\r\n    \"ScopeAffiliation\": 1\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/incomes/{{incomeID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"incomes",
+								"{{incomeID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Edit Income",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Изменить данные о доходе / Edit Income\", () => {\r",
+									"    pm.response.to.have.status(201)\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.contains(\"application/json\")\r",
+									"\r",
+									"    const ownerID = pm.environment.get(\"ownerID\")\r",
+									"\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.be.not.undefined\r",
+									"    pm.expect(response.VisibilityScope.OwnerID).to.eq(ownerID)\r",
+									"    pm.expect(response.Amount).to.eq(6000)\r",
+									"    pm.expect(response.Category).to.eq(\"Стипендия\")\r",
+									"    pm.expect(response.Comment).to.eq(\"Сентябрь и октябрь\")\r",
+									"    pm.expect(response.CreatedAt).to.not.empty\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Amount\": 6000,\r\n  \"Category\": \"Стипендия\",\r\n  \"Comment\": \"Сентябрь и октябрь\",\r\n  \"VisibilityScope\": {\r\n    \"OwnerID\": \"{{ownerID}}\",\r\n    \"ScopeAffiliation\": 1\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/incomes/{{incomeID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"incomes",
+								"{{incomeID}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Balance",
+			"item": [
+				{
+					"name": "[NO AUTH] Balance",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить баланс [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"OwnerID\": \"{{ownerID}}\",\r\n  \"ScopeAffiliation\": 1\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/balance",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"balance"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Balance",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Получить баланс / Take Balance\", () => {\r",
+									"    pm.response.to.have.status(200)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"OwnerID\": \"{{ownerID}}\",\r\n  \"ScopeAffiliation\": 1\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/balance",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"balance"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Comment",
+			"item": [
+				{
+					"name": "[NO AUTH] Post Comment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Создать комментарий [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Content\": \"И не забыть купить солнечные очки, пока скидка\"\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/tasks/{{taskID}}/comments",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tasks",
+								"{{taskID}}",
+								"comments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Post Comment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Создать комментарий / Post Comment\", () => {\r",
+									"    pm.response.to.have.status(201)\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.contains(\"application/json\")\r",
+									"\r",
+									"    const ownerID = pm.environment.get(\"ownerID\")\r",
+									"\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.be.not.undefined\r",
+									"    pm.expect(response.Comments[0].Author.id).to.eq(ownerID)\r",
+									"    pm.expect(response.Comments[0].Content).to.eq(\"И не забыть купить солнечные очки, пока скидка\")\r",
+									"    pm.expect(response.Comments[0].CreatedAt).to.not.empty\r",
+									"\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Content\": \"И не забыть купить солнечные очки, пока скидка\"\r\n}"
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/tasks/{{taskID}}/comments",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tasks",
+								"{{taskID}}",
+								"comments"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Deletion",
+			"item": [
+				{
+					"name": "[NO AUTH] Delete Income",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Удалить доход [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/incomes/{{incomeID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"incomes",
+								"{{incomeID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Delete Income",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Удалить доход / Delete Income\", () => {\r",
+									"    pm.response.to.have.status(204)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/incomes/{{incomeID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"incomes",
+								"{{incomeID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[NO AUTH] Delete Cost",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Удалить расход [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/costs/{{costID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"costs",
+								"{{costID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Delete Cost",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Удалить расход / Delete Cost\", () => {\r",
+									"    pm.response.to.have.status(204)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/costs/{{costID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"costs",
+								"{{costID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[NO AUTH] Delete Task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Удалить задачу [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/tasks/{{taskID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tasks",
+								"{{taskID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Delete Task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Удалить задачу / Delete Task\", () => {\r",
+									"    pm.response.to.have.status(204)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/tasks/{{taskID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tasks",
+								"{{taskID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[NO AUTH] Delete Note",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Удалить заметку [БЕЗ АВТОРИЗАЦИИ]\", () => {\r",
+									"    pm.response.to.have.status(401)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/notes/{{noteID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notes",
+								"{{noteID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[success] Delete Note",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Удалить заметку / Delete Note\", () => {\r",
+									"    pm.response.to.have.status(204)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorizationToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{serviceURL}}/api/v1/notes/{{noteID}}",
+							"host": [
+								"{{serviceURL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notes",
+								"{{noteID}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
