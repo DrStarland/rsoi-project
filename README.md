@@ -2,6 +2,9 @@
 
 [![Build Project](https://github.com/Romanow/rsoi-project/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/Romanow/rsoi-project/actions/workflows/build.yml)
 
+##
+Этот проект ужасен! Даже не думайте им пользоваться для своих целей!
+
 ## Формулировка
 
 Взяв за основу лабораторные работы 2-4, реализовать Пользовательский Интерфейс, сделать свою реализацию Identity
